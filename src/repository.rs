@@ -101,7 +101,7 @@ impl Repository {
               Json_BUILD_OBJECT(
                'bought_at', o.timestamp,
                'bought_for', o.bought_for,
-               'qauntity_bought', o.quantity_owned,
+               'quantity_bought', o.quantity_owned,
                'value_delta', (a.unit_value - o.bought_for) * o.quantity_owned
               )
              ) AS "purchase_history!: _"

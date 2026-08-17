@@ -20,7 +20,7 @@ impl FromRequestParts<AppState> for Admin {
         if auth == ADMIN_SECRET_KEY {
             Ok(Admin)
         } else {
-            Err(AppError::Invalidcredentials)
+            Err(AppError::InvalidCredentials)
         }
     }
 }

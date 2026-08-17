@@ -6,8 +6,8 @@ use thiserror::Error;
 pub enum AppError {
     #[error("Missing Authorization Headers")]
     MissingAuthorization,
-    #[error("Invalid Crdentials")]
-    Invalidcredentials,
+    #[error("Invalid Credentials")]
+    InvalidCredentials,
     #[error("Asset does not exist")]
     AssetDoesNotExist,
     #[error("User does not exist")]
@@ -35,7 +35,7 @@ impl IntoResponse for AppError {
 
         let status = match self {
             Self::UsernameTaken | Self::MissingAuthorization => StatusCode::BAD_REQUEST,
-            Self::Invalidcredentials => StatusCode::UNAUTHORIZED,
+            Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
             Self::AssetDoesNotExist | Self::UserDoesNotExist => StatusCode::NOT_FOUND,
             Self::Database(_) | Self::Template(_) | Self::Jwt(_) => {
                 StatusCode::INTERNAL_SERVER_ERROR

@@ -31,7 +31,7 @@ impl UnauthenticatedUser {
 
         match password_auth::verify_password(&self.password, &user_record.password_hash) {
             Ok(()) => Ok(User::new(user_record.id, user_record.username)),
-            Err(VerifyError::PasswordInvalid) => Err(AppError::Invalidcredentials),
+            Err(VerifyError::PasswordInvalid) => Err(AppError::InvalidCredentials),
             Err(VerifyError::Parse(err)) => panic!("Hashing algorith failed: {err}"),
         }
     }
