@@ -1,7 +1,13 @@
 use axum::{ Json, Router, routing::get };
 use serde::Deserialize;
 
-use crate::{ app::AppState, auth::admin::Admin, error::AppError, models::Asset, repository::Repository };
+use crate::{
+    app::AppState,
+    auth::admin::Admin,
+    error::AppError,
+    models::Asset,
+    repository::Repository
+};
 
 pub fn router() -> Router<AppState> {
     Router::new().route("/assets", get(list_assets).post(create_asset).patch(update_asset))
