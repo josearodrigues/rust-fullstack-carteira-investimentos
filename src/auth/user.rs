@@ -89,7 +89,7 @@ impl FromRequestParts<AppState> for User {
 
     async fn from_request_parts(
         parts: &mut axum::http::request::Parts,
-        state: &AppState,
+        _state: &AppState,
     ) -> Result<Self, Self::Rejection> {
         let jar = CookieJar::from_headers(&parts.headers);
 

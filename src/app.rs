@@ -14,14 +14,16 @@ use crate::routes;
 #[derive(Clone)]
 pub struct AppState {
     pub db: PgPool,
+    pub admin_token: String,
 }
 
 impl AppState {
     async fn new() -> color_eyre::Result<Self> {
+        let admin_token = std::env::var("ADMIN_SECRET_KEY")?;
         let database_url = std::env::var("DATABASE_URL")?;
         let db = PgPool::connect(&database_url).await?;
 
-        Ok(Self { db })
+        Ok(Self { db, admin_token })
     }
 }
 
