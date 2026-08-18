@@ -40,7 +40,7 @@ impl AssetRepository {
 
     pub async fn update_asset(
         &self,
-        asset_id: i64,
+        id: i64,
         name: Option<String>,
         unit_value: Option<f64>,
     ) -> sqlx::Result<Option<Asset>> {
@@ -51,20 +51,20 @@ impl AssetRepository {
              WHERE id=$1
              RETURNING id, name, unit_value;",
         )
-        .bind(asset_id)
+        .bind(id)
         .bind(name)
         .bind(unit_value)
         .fetch_optional(&self.db)
         .await
     }
 
-    pub async fn delete_asset(&self, asset_id: i64) -> sqlx::Result<DeleteAssetOutcome> {
+    pub async fn delete_asset(&self, id: i64) -> sqlx::Result<DeleteAssetOutcome> {
         let asset = sqlx::query_as::<_, Asset>(
             "SELECT id, name, unit_value
              FROM assets
              WHERE id = $1;",
         )
-        .bind(asset_id)
+        .bind(id)
         .fetch_optional(&self.db)
         .await?;
 
@@ -79,7 +79,7 @@ impl AssetRepository {
                 WHERE asset_id = $1
             );",
         )
-        .bind(asset_id)
+        .bind(id)
         .fetch_one(&self.db)
         .await?;
 
@@ -91,7 +91,7 @@ impl AssetRepository {
             "DELETE FROM assets
              WHERE id = $1;",
         )
-        .bind(asset_id)
+        .bind(id)
         .execute(&self.db)
         .await?;
 

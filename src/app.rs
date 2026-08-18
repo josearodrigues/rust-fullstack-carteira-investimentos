@@ -39,6 +39,7 @@ impl App {
         let listener = TcpListener::bind("0.0.0.0:3000").await?;
         let router = Router::new()
             .nest("/api", crate::routes::api::router())
+            .nest("/admin", crate::routes::admin::router())
             .merge(crate::routes::frontend::router())
             .with_state(state);
 
