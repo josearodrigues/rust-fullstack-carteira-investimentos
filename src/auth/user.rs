@@ -3,13 +3,15 @@ use std::convert::Infallible;
 use axum::extract::FromRequestParts;
 use axum_extra::extract::cookie::CookieJar;
 use jwt_simple::{
-    algorithms::{ HS256Key, MACLike },
+    algorithms::{HS256Key, MACLike},
     claims::Claims,
-    prelude::Duration };
+    prelude::Duration,
+};
 use password_auth::VerifyError;
-use serde::{ Serialize, Deserialize };
+use serde::{Deserialize, Serialize};
 
-use crate::{ error::AppError, repository::Repository, app::AppState };
+use crate::repositories::users::UserRepository;
+use crate::{app::AppState, error::AppError};
 
 const SECRET_KEY: &[u8] = b"im-so-secret";
 
@@ -23,7 +25,7 @@ impl UnauthenticatedUser {
         Self { username, password }
     }
 
-    pub async fn authenticate(&self, repository: &Repository) -> Result<User, AppError> {
+    pub async fn authenticate(&self, repository: &UserRepository) -> Result<User, AppError> {
         let user_record = match repository.get_user_by_name(&self.username).await? {
             Some(user_record) => user_record,
             None => return Err(AppError::UserDoesNotExist),
@@ -36,7 +38,7 @@ impl UnauthenticatedUser {
         }
     }
 
-    pub async fn register(&self, repository: Repository) -> Result<User, AppError> {
+    pub async fn register(&self, repository: UserRepository) -> Result<User, AppError> {
         let password_hash = password_auth::generate_hash(&self.password);
         let user_record = match repository.add_user(&self.username, &password_hash).await {
             Ok(user_record) => user_record,
@@ -57,7 +59,7 @@ pub struct User {
 
 impl User {
     fn new(id: i64, username: String) -> Self {
-        Self  { id, username }
+        Self { id, username }
     }
 
     pub const fn username(&self) -> &String {

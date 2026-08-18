@@ -1,0 +1,1 @@
+../../routes/fixtures/bitcoin_asset_with_history.sql

@@ -3,13 +3,8 @@ use sqlx::PgPool;
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing_subscriber::{
-    Layer,
-    fmt::format::FmtSpan,
-    layer::SubscriberExt,
-    util::SubscriberInitExt,
+    Layer, fmt::format::FmtSpan, layer::SubscriberExt, util::SubscriberInitExt,
 };
-
-use crate::routes;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -43,8 +38,9 @@ impl App {
 
         let listener = TcpListener::bind("0.0.0.0:3000").await?;
         let router = Router::new()
-            .nest("/api", routes::api::router())
-            .merge(routes::frontend::router())
+            .nest("/api", crate::routes::api::router())
+            .nest("/admin", crate::routes::admin::router())
+            .merge(crate::routes::frontend::router())
             .with_state(state);
 
         info!("Starting service");

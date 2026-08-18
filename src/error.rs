@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse, Json};
+use axum::{Json, http::StatusCode, response::IntoResponse};
 use serde::Serialize;
 use thiserror::Error;
 
@@ -10,6 +10,8 @@ pub enum AppError {
     InvalidCredentials,
     #[error("Asset does not exist")]
     AssetDoesNotExist,
+    #[error("Asset cannot be deleted because it has history")]
+    AssetCannotBeDeletedBecauseHasHistory,
     #[error("User does not exist")]
     UserDoesNotExist,
     #[error("This username is already registered")]
@@ -37,10 +39,11 @@ impl IntoResponse for AppError {
             Self::UsernameTaken | Self::MissingAuthorization => StatusCode::BAD_REQUEST,
             Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
             Self::AssetDoesNotExist | Self::UserDoesNotExist => StatusCode::NOT_FOUND,
+            Self::AssetCannotBeDeletedBecauseHasHistory => StatusCode::CONFLICT,
             Self::Database(_) | Self::Template(_) | Self::Jwt(_) => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
-        }; 
+        };
 
         (status, Json(error_response)).into_response()
     }
