@@ -10,6 +10,12 @@ pub struct AssetRepository {
     db: PgPool,
 }
 
+pub enum DeleteAssetOutcome {
+    Deleted(Asset),
+    NotFound,
+    HasHistory,
+}
+
 impl AssetRepository {
     pub async fn list_assets(&self) -> sqlx::Result<Vec<Asset>> {
         sqlx::query_as::<_, Asset>(
@@ -50,6 +56,46 @@ impl AssetRepository {
         .bind(unit_value)
         .fetch_optional(&self.db)
         .await
+    }
+
+    pub async fn delete_asset(&self, asset_id: i64) -> sqlx::Result<DeleteAssetOutcome> {
+        let asset = sqlx::query_as::<_, Asset>(
+            "SELECT id, name, unit_value
+             FROM assets
+             WHERE id = $1;",
+        )
+        .bind(asset_id)
+        .fetch_optional(&self.db)
+        .await?;
+
+        let Some(asset) = asset else {
+            return Ok(DeleteAssetOutcome::NotFound);
+        };
+
+        let has_history = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS (
+                SELECT 1
+                FROM owned_assets
+                WHERE asset_id = $1
+            );",
+        )
+        .bind(asset_id)
+        .fetch_one(&self.db)
+        .await?;
+
+        if has_history {
+            return Ok(DeleteAssetOutcome::HasHistory);
+        }
+
+        sqlx::query(
+            "DELETE FROM assets
+             WHERE id = $1;",
+        )
+        .bind(asset_id)
+        .execute(&self.db)
+        .await?;
+
+        Ok(DeleteAssetOutcome::Deleted(asset))
     }
 }
 

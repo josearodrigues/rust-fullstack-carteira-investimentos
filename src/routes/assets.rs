@@ -1,12 +1,15 @@
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 
 use crate::app::AppState;
-use crate::handlers::assets::{create_asset, list_assets, update_asset};
+use crate::handlers::assets::{create_asset, delete_asset, list_assets, update_asset};
 
 pub fn router() -> Router<AppState> {
     Router::new().route(
         "/assets",
-        get(list_assets).post(create_asset).patch(update_asset),
+        get(list_assets)
+            .post(create_asset)
+            .patch(update_asset)
+            .delete(delete_asset),
     )
 }
 
@@ -16,7 +19,8 @@ mod tests {
     use sqlx::PgPool;
 
     use crate::auth::admin::Admin;
-    use crate::handlers::assets::{CreateAssetRequest, UpdateAssetRequest};
+    use crate::error::AppError;
+    use crate::handlers::assets::{CreateAssetRequest, DeleteAssetRequest, UpdateAssetRequest};
 
     use super::*;
 
@@ -65,5 +69,29 @@ mod tests {
         assert_eq!(updated_asset.unit_value, 20.0);
 
         insta::assert_json_snapshot!(updated_asset);
+    }
+
+    #[sqlx::test(fixtures("bitcoin_asset"))]
+    async fn test_delete_asset(db: PgPool) {
+        let request = DeleteAssetRequest { id: 1 };
+
+        let Json(deleted_asset) = delete_asset(Admin, db.into(), Json(request))
+            .await
+            .expect("success");
+
+        assert_eq!(deleted_asset.id, 1);
+        assert_eq!(deleted_asset.name, "Bitcoin");
+        assert_eq!(deleted_asset.unit_value, 10.0);
+
+        insta::assert_json_snapshot!(deleted_asset);
+    }
+
+    #[sqlx::test(fixtures("bitcoin_asset_with_history"))]
+    async fn test_delete_asset_with_history(db: PgPool) {
+        let request = DeleteAssetRequest { id: 1 };
+
+        let result = delete_asset(Admin, db.into(), Json(request)).await;
+
+        assert!(matches!(result, Err(AppError::AssetCannotBeDeletedBecauseHasHistory)));
     }
 }

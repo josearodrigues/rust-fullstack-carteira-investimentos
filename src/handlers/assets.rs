@@ -2,8 +2,10 @@ use axum::Json;
 use serde::Deserialize;
 
 use crate::{
-    auth::admin::Admin, error::AppError, models::asset::Asset,
-    repositories::assets::AssetRepository,
+    auth::admin::Admin,
+    error::AppError,
+    models::asset::Asset,
+    repositories::assets::{AssetRepository, DeleteAssetOutcome},
 };
 
 #[tracing::instrument(skip_all)]
@@ -50,5 +52,23 @@ pub async fn update_asset(
     {
         Some(update_asset) => Ok(Json(update_asset)),
         None => Err(AppError::AssetDoesNotExist),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct DeleteAssetRequest {
+    pub id: i64,
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn delete_asset(
+    _: Admin,
+    repository: AssetRepository,
+    Json(request): Json<DeleteAssetRequest>,
+) -> Result<Json<Asset>, AppError> {
+    match repository.delete_asset(request.id).await? {
+        DeleteAssetOutcome::Deleted(delete_asset) => Ok(Json(delete_asset)),
+        DeleteAssetOutcome::NotFound => Err(AppError::AssetDoesNotExist),
+        DeleteAssetOutcome::HasHistory => Err(AppError::AssetCannotBeDeletedBecauseHasHistory),
     }
 }
