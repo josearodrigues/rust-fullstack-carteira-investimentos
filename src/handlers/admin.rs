@@ -116,3 +116,157 @@ pub async fn delete_asset(
         DeleteAssetOutcome::HasHistory => Err(AppError::AssetCannotBeDeletedBecauseHasHistory),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use axum::{
+        extract::Path,
+        http::{
+            header::{LOCATION, SET_COOKIE},
+            StatusCode,
+        },
+        response::IntoResponse,
+        Form,
+    };
+    use axum_extra::extract::cookie::CookieJar;
+    use sqlx::PgPool;
+
+    use crate::{
+        app::AppState,
+        auth::admin::Admin,
+        error::AppError,
+        repositories::assets::AssetRepository,
+    };
+
+    use super::*;
+
+    fn db_state(db: PgPool, admin_token: &str) -> AppState {
+        AppState {
+            db,
+            admin_token: admin_token.to_string(),
+        }
+    }
+
+    fn lazy_state(admin_token: &str) -> AppState {
+        AppState {
+            db: PgPool::connect_lazy("postgres://postgres:postgres@localhost:5432/postgres")
+                .expect("lazy pool"),
+            admin_token: admin_token.to_string(),
+        }
+    }
+
+    fn assert_redirect_to(response: &axum::response::Response, location: &str) {
+        assert_eq!(response.status(), StatusCode::SEE_OTHER);
+        assert_eq!(response.headers().get(LOCATION).unwrap(), location);
+    }
+
+    #[tokio::test]
+    async fn test_login_page_renders() {
+        let Html(html) = login_page().await.expect("success");
+
+        assert!(html.contains("admin access"));
+        assert!(html.contains("admin_token"));
+    }
+
+    #[tokio::test]
+    async fn test_login_success_sets_admin_cookie() {
+        let state = lazy_state("super-secret");
+        let request = AdminLoginForm {
+            admin_token: "super-secret".to_string(),
+        };
+
+        let response = login(State(state), CookieJar::new(), Form(request))
+            .await
+            .expect("success")
+            .into_response();
+
+        assert_redirect_to(&response, "/admin/assets");
+        let set_cookie = response.headers().get(SET_COOKIE).unwrap().to_str().unwrap();
+        assert!(set_cookie.contains("admin_token=super-secret"));
+        assert!(set_cookie.contains("HttpOnly"));
+    }
+
+    #[tokio::test]
+    async fn test_login_rejects_invalid_token() {
+        let state = lazy_state("super-secret");
+        let request = AdminLoginForm {
+            admin_token: "wrong-token".to_string(),
+        };
+
+        let result = login(State(state), CookieJar::new(), Form(request)).await;
+
+        assert!(matches!(result, Err(AppError::InvalidCredentials)));
+    }
+
+    #[sqlx::test(fixtures("bitcoin_asset"))]
+    async fn test_list_assets_renders_admin_page(db: PgPool) {
+        let Html(html) = list_assets(Admin, db.into()).await.expect("success");
+
+        assert!(html.contains("asset management"));
+        assert!(html.contains("Bitcoin"));
+    }
+
+    #[sqlx::test]
+    async fn test_create_asset_redirects_and_persists(db: PgPool) {
+        let request = CreateAssetForm {
+            name: "Bitcoin".to_string(),
+            unit_value: 10.0,
+        };
+
+        let response = create_asset(Admin, db.clone().into(), Form(request))
+            .await
+            .expect("success")
+            .into_response();
+
+        assert_redirect_to(&response, "/admin/assets");
+
+        let repository: AssetRepository = db.into();
+        let assets = repository.list_assets().await.expect("assets");
+        assert_eq!(assets.len(), 1);
+        assert_eq!(assets[0].name, "Bitcoin");
+    }
+
+    #[sqlx::test(fixtures("bitcoin_asset"))]
+    async fn test_update_asset_redirects_and_updates(db: PgPool) {
+        let request = UpdateAssetRequest {
+            name: Some("Ethereum".to_string()),
+            unit_value: Some(20.0),
+        };
+
+        let response = update_asset(Admin, db.clone().into(), Path(1), Form(request))
+            .await
+            .expect("success")
+            .into_response();
+
+        assert_redirect_to(&response, "/admin/assets");
+
+        let repository: AssetRepository = db.into();
+        let assets = repository.list_assets().await.expect("assets");
+        assert_eq!(assets[0].name, "Ethereum");
+        assert_eq!(assets[0].unit_value, 20.0);
+    }
+
+    #[sqlx::test(fixtures("bitcoin_asset"))]
+    async fn test_delete_asset_redirects_and_removes(db: PgPool) {
+        let response = delete_asset(Admin, db.clone().into(), Path(1))
+            .await
+            .expect("success")
+            .into_response();
+
+        assert_redirect_to(&response, "/admin/assets");
+
+        let repository: AssetRepository = db.into();
+        let assets = repository.list_assets().await.expect("assets");
+        assert!(assets.is_empty());
+    }
+
+    #[sqlx::test(fixtures("bitcoin_asset_with_history"))]
+    async fn test_delete_asset_with_history_rejects(db: PgPool) {
+        let result = delete_asset(Admin, db.into(), Path(1)).await;
+
+        assert!(matches!(
+            result,
+            Err(AppError::AssetCannotBeDeletedBecauseHasHistory)
+        ));
+    }
+}
