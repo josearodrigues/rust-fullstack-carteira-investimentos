@@ -1,8 +1,11 @@
-use axum::{extract::FromRequestParts, http::header::AUTHORIZATION};
+use axum::extract::FromRequestParts;
+use axum_extra::extract::cookie::CookieJar;
 
 use crate::{app::AppState, error::AppError};
 
 pub struct Admin;
+
+const ADMIN_COOKIE_NAME: &str = "admin_token";
 
 impl FromRequestParts<AppState> for Admin {
     type Rejection = AppError;
@@ -11,16 +14,11 @@ impl FromRequestParts<AppState> for Admin {
         parts: &mut axum::http::request::Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
-        let auth = parts
-            .headers
-            .get(AUTHORIZATION)
+        let jar = CookieJar::from_headers(&parts.headers);
+        let token = jar
+            .get(ADMIN_COOKIE_NAME)
             .ok_or(AppError::MissingAuthorization)?
-            .to_str()
-            .map_err(|_| AppError::InvalidCredentials)?;
-
-        let token = auth
-            .strip_prefix("Bearer ")
-            .ok_or(AppError::InvalidCredentials)?;
+            .value();
 
         if token == state.admin_token {
             Ok(Admin)
