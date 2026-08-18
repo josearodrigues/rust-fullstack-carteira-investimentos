@@ -48,11 +48,11 @@ BUY  → aumenta a quantidade mantida
 SELL → reduz a quantidade mantida
 ```
 
-O tipo é persistido no banco por meio do enum PostgreSQL `asset_operation`, com os valores `BUY` e `SELL`. fileciteturn35file0L2-L2
+O tipo é persistido no banco por meio do enum PostgreSQL `asset_operation`, com os valores `BUY` e `SELL`.
 
 ### Regra de venda
 
-Uma venda somente é aceita quando o usuário possui quantidade suficiente do ativo. Caso contrário, a API retorna `400 Bad Request` com o erro `Insufficient Quantity`. fileciteturn26file0L2-L2 fileciteturn34file0L2-L2
+Uma venda somente é aceita quando o usuário possui quantidade suficiente do ativo. Caso contrário, a aplicação retorna `400 Bad Request` com o erro `Insufficient Quantity`.
 
 Exemplo conceitual:
 
@@ -71,7 +71,7 @@ SELL 0.30 BTC
 Bitcoin: 0.20
 ```
 
-O teste de integração da operação cobre exatamente esse fluxo: tentativa de venda sem saldo, compra de 0,5, tentativa de venda de 0,6 e venda válida de 0,3, terminando com 0,2 unidades na carteira. fileciteturn26file0L2-L2
+O teste de integração cobre esse fluxo: tentativa de venda sem saldo, compra de 0,5, tentativa de venda de 0,6 e venda válida de 0,3, terminando com 0,2 unidades na carteira.
 
 ---
 
@@ -89,9 +89,9 @@ Cada registro contém:
 | `quantity_bought` | quantidade movimentada |
 | `value_delta` | variação calculada para a movimentação |
 
-O modelo `TransactionHistory` formaliza essa estrutura e serializa a data/hora em ISO 8601. fileciteturn27file0L2-L2
+O modelo `TransactionHistory` formaliza essa estrutura e serializa a data/hora em ISO 8601.
 
-Na interface, o usuário pode expandir cada ativo para visualizar seu histórico, incluindo **tipo da transação**, quantidade, valor unitário, data e variação. fileciteturn29file0L2-L2
+Na interface, o usuário pode expandir cada ativo para visualizar seu histórico, incluindo **tipo da transação**, quantidade, valor unitário, data e variação.
 
 ---
 
@@ -130,9 +130,9 @@ Na interface, o usuário pode expandir cada ativo para visualizar seu histórico
          PostgreSQL
 ```
 
-A implementação do fluxo público está concentrada no handler de portfolio e utiliza os repositories de assets e de ativos pertencentes ao usuário. fileciteturn26file0L2-L2
+A implementação do fluxo público está concentrada no handler de portfolio e utiliza os repositories de assets e de ativos pertencentes ao usuário.
 
-> **Nota:** apesar de a implementação estar organizada em `portfolio.rs`, a rota HTTP atualmente utilizada pela interface é `/assets`. O módulo de rotas registra `GET /assets` e `POST /assets`. fileciteturn28file0L2-L2
+> **Nota:** apesar de a implementação estar organizada em `portfolio.rs`, a rota HTTP atualmente utilizada pela interface é `/assets`. O módulo de rotas registra `GET /assets` e `POST /assets`.
 
 ---
 
@@ -148,8 +148,6 @@ A implementação do fluxo público está concentrada no handler de portfolio e 
 | `GET` | `/logout` | Encerra a sessão |
 | `GET` | `/assets` | Exibe carteira, ativos e histórico |
 | `POST` | `/assets` | Registra uma operação `BUY` ou `SELL` |
-
-O módulo de login registra as rotas `/`, `/login` e `/logout`. fileciteturn32file0L2-L2
 
 ### Administração
 
@@ -173,11 +171,11 @@ Uma operação `BUY` registra a quantidade adquirida e aumenta a posição do us
 
 ### Venda
 
-Uma operação `SELL` primeiro verifica a quantidade atualmente mantida pelo usuário. Se a quantidade solicitada for maior que a posição disponível, a operação é rejeitada. fileciteturn26file0L2-L2
+Uma operação `SELL` primeiro verifica a quantidade atualmente mantida pelo usuário. Se a quantidade solicitada for maior que a posição disponível, a operação é rejeitada.
 
 ### Exclusão administrativa
 
-Um ativo com histórico não pode ser excluído. O erro correspondente é convertido para `409 Conflict`, preservando a integridade histórica da carteira. fileciteturn34file0L2-L2
+Um ativo com histórico não pode ser excluído. O erro correspondente é convertido para `409 Conflict`, preservando a integridade histórica da carteira.
 
 ```text
 Ativo inexistente       → 404 Not Found
@@ -286,8 +284,6 @@ A estrutura atual separa autenticação, rotas, handlers, modelos, repositories 
 - **Insta** — suporte a testes/snapshots;
 - **Docker Compose** — ambiente local.
 
-As versões e dependências declaradas atualmente estão no `Cargo.toml`. fileciteturn20file0L2-L2
-
 ---
 
 ## 📦 Pré-requisitos
@@ -337,7 +333,7 @@ ADMIN_SECRET_KEY=seu-token-admin
 docker compose -f compose.yml up -d
 ```
 
-O Compose atual utiliza PostgreSQL `18.6-alpine3.24` e um volume persistente para `/var/lib/postgresql`. fileciteturn25file0L2-L2
+O Compose atual utiliza PostgreSQL `18.6-alpine3.24` e um volume persistente para `/var/lib/postgresql`.
 
 ### 4. Execute as migrações
 
@@ -345,7 +341,7 @@ O Compose atual utiliza PostgreSQL `18.6-alpine3.24` e um volume persistente par
 sqlx migrate run
 ```
 
-A feature de compra/venda adiciona o tipo PostgreSQL `asset_operation` e a coluna `operation_type` em `owned_assets`. fileciteturn35file0L2-L2
+A feature de compra/venda adiciona o tipo PostgreSQL `asset_operation` e a coluna `operation_type` em `owned_assets`.
 
 ### 5. Inicie a aplicação
 
@@ -369,7 +365,7 @@ Execute:
 cargo test
 ```
 
-Os testes que exercitam persistência utilizam `sqlx::test`, portanto o PostgreSQL precisa estar disponível. A funcionalidade de compra/venda possui teste para validar venda sem quantidade suficiente, compra, venda parcial e quantidade final da posição. fileciteturn26file0L2-L2
+Os testes que exercitam persistência utilizam `sqlx::test`, portanto o PostgreSQL precisa estar disponível. A funcionalidade de compra/venda possui teste para validar venda sem quantidade suficiente, compra, venda parcial e quantidade final da posição.
 
 ### Checklist recomendado
 
@@ -441,7 +437,7 @@ Se a aplicação retornar:
 Insufficient Quantity
 ```
 
-verifique a quantidade atualmente mantida do ativo. A implementação bloqueia uma venda que exceda essa quantidade. fileciteturn26file0L2-L2
+verifique a quantidade atualmente mantida do ativo. A implementação bloqueia uma venda que exceda essa quantidade.
 
 ---
 
@@ -464,8 +460,6 @@ A evolução desta branch amplia o conceito de compra para **operações de cart
 - histórico com tipo de transação;
 - testes automatizados dos cenários de compra e venda;
 - reorganização de handlers e rotas para acomodar o fluxo de portfolio.
-
-O compare entre `main` e esta branch mostra, além dos arquivos de documentação da raiz, mudanças concentradas justamente nesses componentes de portfolio, histórico, repositórios e migração do banco.
 
 ---
 
