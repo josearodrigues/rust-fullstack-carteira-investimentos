@@ -9,6 +9,7 @@ Aplicacao web em Rust para gerenciar uma carteira de ativos. O projeto permite a
 - Mostra os ativos disponiveis e os ativos comprados.
 - Registra novas compras e calcula o resultado de cada movimentacao.
 - Disponibiliza uma area administrativa para login, logout, listagem, criacao, atualizacao e exclusao de ativos.
+- Implementa a área de portfolio com rotas /portfolio, compra e venda de ativos, além de testes automatizados.
 - Impede a exclusao de um ativo quando ele ja possui historico de compras.
 
 ## Como executar a aplicacao
