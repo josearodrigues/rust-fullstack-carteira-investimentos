@@ -52,6 +52,7 @@ impl UnauthenticatedUser {
     }
 }
 
+#[derive(Clone)]
 pub struct User {
     id: i64,
     username: String,

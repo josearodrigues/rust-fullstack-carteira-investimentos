@@ -40,7 +40,7 @@ impl App {
         let router = Router::new()
             .nest("/api", crate::routes::api::router())
             .nest("/admin", crate::routes::admin::router())
-            .merge(crate::routes::frontend::router())
+            .merge(crate::routes::portfolio::router())
             .with_state(state);
 
         info!("Starting service");

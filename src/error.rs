@@ -16,6 +16,8 @@ pub enum AppError {
     UserDoesNotExist,
     #[error("This username is already registered")]
     UsernameTaken,
+    #[error("Insufficient Quantity")]
+    InsufficientQuantity,
     #[error(transparent)]
     Database(#[from] sqlx::Error),
     #[error(transparent)]
@@ -36,7 +38,9 @@ impl IntoResponse for AppError {
         };
 
         let status = match self {
-            Self::UsernameTaken | Self::MissingAuthorization => StatusCode::BAD_REQUEST,
+            Self::UsernameTaken | Self::MissingAuthorization | Self::InsufficientQuantity => {
+                StatusCode::BAD_REQUEST
+            },
             Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
             Self::AssetDoesNotExist | Self::UserDoesNotExist => StatusCode::NOT_FOUND,
             Self::AssetCannotBeDeletedBecauseHasHistory => StatusCode::CONFLICT,
