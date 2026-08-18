@@ -1,19 +1,22 @@
 use askama::Template;
-use axum::{ 
+use axum::{
     Form, Router,
-    response::{ Html, IntoResponse, Redirect },
+    response::{Html, IntoResponse, Redirect},
     routing::get,
 };
-use axum_extra::extract::{ CookieJar, cookie::Cookie };
+use axum_extra::extract::{CookieJar, cookie::Cookie};
 use serde::Deserialize;
 use tokio::try_join;
 
 use crate::{
     app::AppState,
-    auth::user::{ UnauthenticatedUser, User },
+    auth::user::{UnauthenticatedUser, User},
     error::AppError,
-    models::{ Asset, OwnedAsset },
-    repository::Repository,
+    models::asset::Asset,
+    models::owned_asset::OwnedAsset,
+    repositories::assets::AssetRepository,
+    repositories::owned_assets::OwnedAssetRepository,
+    repositories::users::UserRepository,
 };
 
 pub fn router() -> Router<AppState> {
@@ -41,15 +44,15 @@ struct LoginForm {
 }
 
 async fn login(
-    repository: Repository,
+    repository: UserRepository,
     jar: CookieJar,
-    Form(request): Form<LoginForm>
+    Form(request): Form<LoginForm>,
 ) -> Result<impl IntoResponse, AppError> {
     let unauth_user = UnauthenticatedUser::new(request.username, request.password);
     let user = match unauth_user.authenticate(&repository).await {
         Ok(user) => user,
         Err(AppError::UserDoesNotExist) => unauth_user.register(repository).await?,
-        Err(other_err) => return Err(other_err)
+        Err(other_err) => return Err(other_err),
     };
 
     let token = user.auth_token()?;
@@ -66,7 +69,7 @@ pub async fn logout(jar: CookieJar) -> impl IntoResponse {
 async fn index(maybe_user: Option<User>) -> Result<Redirect, AppError> {
     match maybe_user {
         Some(_) => Ok(Redirect::to("/assets")),
-        None => Ok(Redirect::to("/login"))
+        None => Ok(Redirect::to("/login")),
     }
 }
 
@@ -78,10 +81,14 @@ pub struct AssetsPage {
     user: User,
 }
 
-pub async fn assets(repository: Repository, user: User) -> Result<Html<String>, AppError> {
+pub async fn assets(
+    owned_asset_repository: OwnedAssetRepository,
+    asset_repository: AssetRepository,
+    user: User,
+) -> Result<Html<String>, AppError> {
     let (owned_assets, available_assets) = try_join!(
-        repository.list_owned_assets(user.id()),
-        repository.list_assets()
+        owned_asset_repository.list_owned_assets(user.id()),
+        asset_repository.list_assets()
     )?;
 
     let html = AssetsPage {
@@ -102,7 +109,7 @@ pub struct PurchaseAssetForm {
 }
 
 pub async fn purchase_asset(
-    repository: Repository,
+    repository: OwnedAssetRepository,
     user: User,
     Form(request): Form<PurchaseAssetForm>,
 ) -> Result<Redirect, AppError> {
@@ -121,9 +128,7 @@ pub async fn purchase_asset(
 pub mod filters {
     use askama;
     use time::{
-        OffsetDateTime,
-        format_description::StaticFormatDescription,
-        macros::format_description,
+        OffsetDateTime, format_description::StaticFormatDescription, macros::format_description,
     };
 
     #[askama::filter_fn]
@@ -133,7 +138,7 @@ pub mod filters {
     ) -> askama::Result<String> {
         const HUMAN_READABLE_FORMAT: StaticFormatDescription =
             format_description!(version = 2, "[year]-[month]-[day] [hour]:[minute]");
-        
+
         datetime
             .format(HUMAN_READABLE_FORMAT)
             .map_err(askama::Error::custom)
