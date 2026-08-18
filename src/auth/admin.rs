@@ -1,8 +1,6 @@
-use axum::{ extract::FromRequestParts, http::header::AUTHORIZATION };
+use axum::{extract::FromRequestParts, http::header::AUTHORIZATION};
 
-use crate::{app::AppState, error::AppError };
-
-// const ADMIN_SECRET_KEY: &str = "im-the-admin";
+use crate::{app::AppState, error::AppError};
 
 pub struct Admin;
 
@@ -13,12 +11,15 @@ impl FromRequestParts<AppState> for Admin {
         parts: &mut axum::http::request::Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
-        let auth = parts.headers.get(AUTHORIZATION)
+        let auth = parts
+            .headers
+            .get(AUTHORIZATION)
             .ok_or(AppError::MissingAuthorization)?
             .to_str()
             .map_err(|_| AppError::InvalidCredentials)?;
 
-        let token = auth.strip_prefix("Bearer ")
+        let token = auth
+            .strip_prefix("Bearer ")
             .ok_or(AppError::InvalidCredentials)?;
 
         if token == state.admin_token {
