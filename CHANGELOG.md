@@ -1,52 +1,36 @@
 # Changelog
 
-Todas as mudanças relevantes deste projeto serão documentadas neste arquivo.
+Todas as mudanças relevantes da **Wallet Live** são documentadas neste arquivo.
 
-O formato é baseado em [Keep a Changelog](https://keepachangelog.com/) e este projeto segue o [Versionamento Semântico (SemVer)](https://semver.org/lang/pt-BR/).
+O formato segue uma adaptação do [Keep a Changelog](https://keepachangelog.com/) e o projeto utiliza [Versionamento Semântico (SemVer)](https://semver.org/lang/pt-BR/) como referência.
 
 ## [Unreleased]
 
 ### Added
 
+- Suporte a operações de compra (`BUY`) e venda (`SELL`) de ativos.
+- Histórico de transações com tipo de operação.
+- Validação de quantidade disponível antes de uma venda.
+- Testes automatizados para os fluxos de compra e venda.
+
 ### Changed
+
+- A operação anteriormente tratada como compra passou a representar uma movimentação de carteira.
+- `owned_assets` passou a armazenar `operation_type`.
+- A interface de ativos passou a permitir selecionar o tipo da transação.
+- A organização dos handlers, rotas e modelos foi ajustada para suportar o fluxo de portfolio.
 
 ### Fixed
 
-## [0.2.0] - 2026-07-17
+- Bloqueio de vendas que excedam a quantidade mantida pelo usuário.
 
-### Added
+## [Previous]
 
-- Implementação da validação de CNPJ.
-- Testes de integração para CNPJ.
-- Exemplos de utilização do validador de CNPJ.
-- Refatoração da lógica comum para o módulo interno `utils`.
+### Administration
 
-### Changed
-
-- Reorganização da estrutura interna da biblioteca para facilitar a inclusão de novos validadores.
-
-## [0.1.2] - 2026-07-17
-
-### Changed
-
-- Renomeados exemplos e documentação para refletir o novo nome da crate.
-- Melhorias no README.
-
-## [0.1.1] - 2026-07-17
-
-### Added
-
-- Implementação da validação de CPF.
-- Documentação completa da API (`rustdoc`).
-- Testes de integração.
-- Exemplo de utilização da biblioteca.
-- Banner SVG para o README.
-- Arquivos `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` e `SUPPORT.md`.
-- Licenciamento duplo (`MIT OR Apache-2.0`).
-- Workflow de Integração Contínua (GitHub Actions).
-
-### Changed
-
-- Reestruturação completa do `README.md`.
-- Melhorias na organização do projeto.
-- Preparação para publicação no crates.io.
+- Implementada área administrativa protegida para gerenciamento de assets.
+- Adicionados login e logout administrativos.
+- Implementado CRUD de assets.
+- Impedida a exclusão de assets que possuem histórico de movimentações.
+- Tentativas de exclusão bloqueadas retornam `409 Conflict`.
+- Adicionados testes e fixtures para os fluxos administrativos.
