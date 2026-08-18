@@ -1,4 +1,4 @@
-use crate::models::purchase_history::PurchaseHistory;
+use crate::models::transaction_history::TransactionHistory;
 use serde::Serialize;
 use sqlx::types::Json;
 
@@ -9,5 +9,5 @@ pub struct OwnedAsset {
     pub unit_value: f64,
     pub value_delta: f64,
     pub quantity_owned: f64,
-    pub purchase_history: Json<Vec<PurchaseHistory>>,
+    pub purchase_history: Json<Vec<TransactionHistory>>,
 }
