@@ -1,14 +1,57 @@
 services:
+  # ---------------------------------------------------------------------------
+  # Banco de dados PostgreSQL
+  # ---------------------------------------------------------------------------
   db:
     image: postgres:18.6-alpine3.24
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     ports:
-      - 5432:5432
+      - "5432:5432"
     volumes:
+      # Caminho correto para persistência dos dados do PostgreSQL.
       - postgres:/var/lib/postgresql
+    networks:
+      - wallet_net
+    # Garante que o serviço `app` só suba quando o banco estiver aceitando conexões.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # Aplicação wallet_live (Rust / Axum)
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    # Carrega variáveis de ambiente do arquivo .env (DATABASE_URL, ADMIN_SECRET_KEY, etc.)
+    env_file:
+      - .env
+    environment:
+      # Sobrescreve DATABASE_URL para usar o hostname do serviço `db` na rede interna,
+      # em vez de `localhost` que é o padrão no .env local.
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+    networks:
+      - wallet_net
+    depends_on:
+      db:
+        # Aguarda o healthcheck do PostgreSQL passar antes de iniciar a aplicação.
+        condition: service_healthy
+
+networks:
+  # Rede interna isolada. Os serviços se comunicam pelo nome do serviço (hostname = db).
+  wallet_net:
+    driver: bridge
 
 volumes:
   postgres:

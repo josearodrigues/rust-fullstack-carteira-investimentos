@@ -33,7 +33,10 @@ impl App {
 
         tracing_subscriber::registry().with(layer).init();
 
-        dotenvy::dotenv()?;
+        // Em desenvolvimento, carrega variáveis do arquivo .env.
+        // Em produção/Docker, as variáveis já estão no ambiente — o .ok()
+        // ignora graciosamente a ausência do arquivo sem encerrar o processo.
+        dotenvy::dotenv().ok();
         let state = AppState::new().await?;
 
         let listener = TcpListener::bind("0.0.0.0:3000").await?;

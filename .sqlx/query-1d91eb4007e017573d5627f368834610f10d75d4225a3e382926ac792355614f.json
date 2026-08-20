@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n             COALESCE(SUM(\n              CASE\n               WHEN o.operation_type = 'BUY'  THEN  o.quantity_owned * a.unit_value\n               WHEN o.operation_type = 'SELL' THEN -o.quantity_owned * a.unit_value\n              END\n             ), 0.0) AS \"patrimony!: f64\",\n             COALESCE(SUM(\n              CASE\n               WHEN o.operation_type = 'BUY'  THEN  o.quantity_owned * o.bought_for\n               WHEN o.operation_type = 'SELL' THEN -o.quantity_owned * o.bought_for\n              END\n             ), 0.0) AS \"invested!: f64\",\n             COUNT(DISTINCT o.asset_id) AS \"total_assets!: i64\",\n             COUNT(*) AS \"total_operations!: i64\"\n            FROM owned_assets AS o\n            JOIN assets AS a ON a.id = o.asset_id\n            WHERE o.user_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "patrimony!: f64",
+        "type_info": "Float8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "invested!: f64",
+        "type_info": "Float8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "total_assets!: i64",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "total_operations!: i64",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "1d91eb4007e017573d5627f368834610f10d75d4225a3e382926ac792355614f"
+}

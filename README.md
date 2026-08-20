@@ -332,8 +332,10 @@ ADMIN_SECRET_KEY=seu-token-admin
 
 ### 3. Suba o PostgreSQL
 
+Para rodar a aplicação localmente de forma interativa com `cargo run`, suba apenas o serviço do banco de dados:
+
 ```bash
-docker compose -f compose.yml up -d
+docker compose up db -d
 ```
 
 ### 4. Execute as migrações
@@ -400,34 +402,57 @@ Na revisão desta feature, os dois comandos passaram com sucesso: **27 testes pa
 
 ## 🐳 Docker e PostgreSQL
 
-Subir:
+A aplicação está totalmente dockerizada, permitindo subir o banco de dados PostgreSQL e o servidor Axum em Rust rodando juntos em uma rede isolada.
+
+### Subir o ecossistema completo (Aplicação + Banco)
+
+Para compilar o binário (via Docker multi-stage) e iniciar os serviços:
 
 ```bash
-docker compose -f compose.yml up -d
+docker compose up --build -d
 ```
 
-Verificar:
+> **Acesso rápido:** 
+> - **Aplicação:** [http://localhost:3000](http://localhost:3000)
+> - **Tela de Login:** [http://localhost:3000/login](http://localhost:3000/login)
+
+### Verificar status e logs
+
+Para acompanhar o status dos containers:
 
 ```bash
-docker compose -f compose.yml ps
-docker compose -f compose.yml logs db
+docker compose ps
 ```
 
-Parar:
+Para monitorar os logs em tempo real (geral ou por serviço):
 
 ```bash
-docker compose -f compose.yml down
+# Todos os serviços
+docker compose logs -f
+
+# Apenas a aplicação Rust
+docker compose logs -f app
+
+# Apenas o PostgreSQL
+docker compose logs -f db
 ```
 
-Para recriar o banco local do zero:
+### Parar os serviços
 
 ```bash
-docker compose -f compose.yml down -v
-docker compose -f compose.yml up -d
-sqlx migrate run
+docker compose down
 ```
 
-> ⚠️ `down -v` remove o volume do PostgreSQL e, consequentemente, os dados locais persistidos.
+### Para recriar o banco local do zero
+
+Se precisar limpar os dados do volume persistente e subir o banco do zero:
+
+```bash
+docker compose down -v
+docker compose up --build -d
+```
+
+> ⚠️ `down -v` remove o volume do PostgreSQL e, consequentemente, todos os dados locais persistidos no banco.
 
 ---
 
