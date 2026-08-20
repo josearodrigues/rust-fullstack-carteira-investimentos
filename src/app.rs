@@ -41,7 +41,8 @@ impl App {
             .nest("/api", crate::routes::api::router())
             .nest("/admin", crate::routes::admin::router())
             .merge(crate::routes::login::router())
-            .merge(crate::routes::portfolio::router())
+            .merge(crate::routes::wallet::router())
+            .merge(crate::routes::dashboard::router())
             .with_state(state);
 
         info!("Starting service");

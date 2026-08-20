@@ -11,8 +11,8 @@ pub enum AssetOperation {
 impl std::fmt::Display for AssetOperation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Buy => write!(f, "BUY"),
-            Self::Sell => write!(f, "SELL"),
+            Self::Buy => write!(f, "COMPRA"),
+            Self::Sell => write!(f, "VENDA"),
         }
     }
 }

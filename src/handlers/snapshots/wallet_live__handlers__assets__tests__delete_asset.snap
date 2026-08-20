@@ -1,6 +1,6 @@
 ---
-source: src/routes/api.rs
-expression: new_asset
+source: src/handlers/assets.rs
+expression: deleted_asset
 ---
 {
   "id": 1,

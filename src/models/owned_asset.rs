@@ -1,4 +1,7 @@
-use crate::models::transaction_history::TransactionHistory;
+use crate::models::{
+    transaction_history::TransactionHistory,
+    portfolio_summary::format_brl
+};
 use serde::Serialize;
 use sqlx::types::Json;
 
@@ -10,4 +13,10 @@ pub struct OwnedAsset {
     pub value_delta: f64,
     pub quantity_owned: f64,
     pub purchase_history: Json<Vec<TransactionHistory>>,
+}
+
+impl OwnedAsset {
+    pub fn invest_value(&self) -> String {
+        format_brl(self.unit_value * self.quantity_owned)        
+    }
 }

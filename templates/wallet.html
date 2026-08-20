@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carteira de Ativos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-slate-950 text-white min-h-screen" style="font-family: 'Space Mono', monospace;">
+    <div class="max-w-3xl mx-auto px-6 py-10">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-semibold tracking-tight">Ativos</h1>
+            <span class="text-sm text-white/60">Bem-vindo, {{ user.username() }}!</span>
+        </div>
+
+        <!-- Assets -->
+        <div class="space-y-1">
+            <!-- Header Row -->
+            <div class="grid grid-cols-12 gap-4 border-b border-white/10 pb-3 mb-4 text-xs text-white/40 uppercase tracking-wider">
+                <div class="col-span-4">Nome</div>
+                <div class="col-span-2 text-right">Quantidade</div>
+                <div class="col-span-3 text-right">Valor unitário</div>
+                <div class="col-span-3 text-right">Variação</div>
+            </div>
+
+            <!-- Asset Rows -->
+            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden">
+                {% for asset in owned_assets %}
+                <!-- Asset -->
+                <div class="grid grid-cols-12 gap-4 p-4 border-b border-white/5 text-sm cursor-pointer hover:bg-white/5 transition-colors duration-200"
+                    onclick="document.getElementById('history-{{ loop.index }}').classList.toggle('hidden')"
+                >
+                    <div class="col-span-4 font-medium">{{ asset.name }}</div>
+                    <div class="col-span-2 text-right text-white/80">{{ asset.quantity_owned }}</div>
+                    <div class="col-span-3 text-right text-white/80">$ {{ asset.unit_value }}</div>
+                    {% if asset.value_delta >= 0.0 %}
+                    <div class="col-span-3 text-right text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.6)]">+{{ asset.value_delta }}</div>
+                    {% else %}
+                    <div class="col-span-3 text-right text-rose-400 drop-shadow-[0_0_6px_rgba(251,113,133,0.6)]">{{ asset.value_delta }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Purchase History -->
+                <div id="history-{{ loop.index }}" class="bg-white/[0.03] hidden">
+                    <div class="grid grid-cols-12 gap-4 p-2 px-4 border-b border-white/5 text-xs text-white/30 uppercase">
+                        <div class="col-span-3">Data</div>
+                        <div class="col-span-2 text-right">Quantidade</div>
+                        <div class="col-span-2 text-right">Valor unitário</div>
+                        <div class="col-span-2 text-right">Operação</div>
+                        <div class="col-span-3 text-right">Variação</div>
+                    </div>
+
+                    {% for purchase in asset.purchase_history.0 %}
+                    <div class="grid grid-cols-12 gap-4 p-2 px-4 border-b border-white/5 text-xs text-white/60 last:border-b-0">
+                        <div class="col-span-3">{{ purchase.occurred_at | human_datetime }}</div>
+                        <div class="col-span-2 text-right">{{ purchase.quantity_bought }}</div>
+                        <div class="col-span-2 text-right">$ {{ purchase.unit_value }}</div>
+                        <div class="col-span-2 text-right">{{ purchase.operation_type }}</div>
+                        {% if purchase.value_delta >= 0.0 %}
+                        <div class="col-span-3 text-right text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.6)]">+{{ purchase.value_delta }}</div>
+                        {% else %}
+                        <div class="col-span-3 text-right text-rose-400 drop-shadow-[0_0_6px_rgba(251,113,133,0.6)]">{{ purchase.value_delta }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-8 flex gap-4">
+
+            <!-- Register Purchase -->
+            <button type="button"
+                onclick="document.getElementById('purchaseDialog').showModal()"
+                class="px-5 py-2.5 bg-cyan-500/20 border border-cyan-400/30 rounded-xl text-cyan-400 text-sm font-medium hover:bg-cyan-500/30 transition-all duration-300"
+            >Registrar transação</button>
+            <!-- Dashboard View -->
+            <a href="/dashboard"
+            class="px-5 py-2.5 bg-cyan-500/20 border border-cyan-400/30 rounded-xl text-cyan-400 text-sm font-medium hover:bg-cyan-500/30 transition-all duration-300"
+            >Visualizar painel</a>
+            <!-- Logout -->
+            <a href="/logout"
+                class="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/60 text-sm hover:bg-white/10 hover:text-white transition-all duration-300 inline-block"
+            >Sair</a>
+        </div>
+
+        <!-- Purchase Dialog -->
+        <dialog id="purchaseDialog"
+            class="bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 w-full max-w-md shadow-[0_0_40px_rgba(34,211,238,0.15)] backdrop:bg-black/70"
+        >
+            <h2 class="text-lg font-semibold text-white mb-6">Registrar transação</h2>
+
+            <!-- Error message container -->
+            <div id="dialogError" class="hidden mb-5 p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <span id="dialogErrorText"></span>
+            </div>
+
+            <form method="POST" action="/assets" class="space-y-5">
+                <!-- Asset -->
+                <div>
+                    <label for="assetId" class="block text-sm text-white/50 uppercase mb-1.5">Ativo</label>
+                    <select
+                        id="assetId"
+                        name="asset_id"
+                        required
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-400/50 focus:shadow-[0_0_10px_rgba(34,211,238,0.15)]"
+                    >
+                        <option value="" class="bg-slate-900 text-white">Selecione um ativo</option>
+
+                        {% for asset in available_assets %}
+                        <option value="{{ asset.id }}" class="bg-slate-900 text-white">{{ asset.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Transaction Type -->
+                <div>
+                    <label for="operationType" class="block text-sm text-white/50 uppercase mb-1.5">Tipo de transação</label>
+                    <select
+                        id="operationType"
+                        name="operation_type"
+                        required
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-400/50 focus:shadow-[0_0_10px_rgba(34,211,238,0.15)]"
+                    >
+                        <option value="BUY" class="bg-slate-900 text-white" selected>Compra</option>
+                        <option value="SELL" class="bg-slate-900 text-white">Venda</option>
+                    </select>
+                </div>
+
+                <!-- Unit Value -->
+                <div>
+                    <label for="unitValue" class="block text-sm text-white/50 uppercase mb-1.5">Valor unitário</label>
+                    <input
+                        type="number"
+                        id="unitValue"
+                        name="unit_value"
+                        step="0.01"
+                        min="0"
+                        required
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-400/50 focus:shadow-[0_0_10px_rgba(34,211,238,0.15)] transition-all"
+                    >
+                </div>
+
+                <!-- Quantity -->
+                <div>
+                    <label for="quantity" class="block text-sm text-white/50 uppercase mb-1.5">Quantidade</label>
+                    <input
+                        type="number"
+                        id="quantity"
+                        name="quantity"
+                        step="0.01"
+                        min="0"
+                        required
+                        class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-cyan-400/50 focus:shadow-[0_0_10px_rgba(34,211,238,0.15)] transition-all"
+                    >
+                </div>
+
+                <!-- Dialog Actions -->
+                <div class="flex justify-end gap-3 pt-2">
+                    <!-- Cancel -->
+                    <button type="button"
+                        onclick="document.getElementById('purchaseDialog').close()"
+                        class="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white/60 text-sm hover:bg-white/10 hover:text-white transition-all duration-300"
+                    >Cancelar</button>
+                    <!-- Submit -->
+                    <button type="submit"
+                        class="px-5 py-2.5 bg-cyan-500/20 border border-cyan-400/30 rounded-xl text-cyan-400 text-sm font-medium hover:bg-cyan-500/30 transition-all duration-300"
+                    >Salvar</button>
+                </div>
+            </form>
+        </dialog>
+    </div>
+
+    <script>
+        const form = document.querySelector('#purchaseDialog form');
+        const dialogError = document.getElementById('dialogError');
+        const dialogErrorText = document.getElementById('dialogErrorText');
+        const dialog = document.getElementById('purchaseDialog');
+
+        // Clear error and reset form when dialog is closed
+        dialog.addEventListener('close', () => {
+            form.reset();
+            dialogError.classList.add('hidden');
+            dialogErrorText.textContent = '';
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            dialogError.classList.add('hidden');
+            
+            const formData = new URLSearchParams(new FormData(form));
+            try {
+                const response = await fetch('/assets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    const data = await response.json();
+                    dialogErrorText.textContent = data.error || 'An unexpected error occurred';
+                    dialogError.classList.remove('hidden');
+                }
+            } catch (err) {
+                dialogErrorText.textContent = 'Network error, please try again.';
+                dialogError.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
