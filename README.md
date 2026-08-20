@@ -2,84 +2,121 @@
 
 > Aplicação web fullstack desenvolvida em **Rust** para gerenciamento de uma carteira de investimentos.
 >
-> O projeto faz parte do **Santander Bootcamp 2026 — Rust AI Developer** e evoluiu de um fluxo básico de compras para uma aplicação com autenticação, histórico de transações, compra e venda de ativos, persistência em PostgreSQL e área administrativa protegida.
+> Projeto desenvolvido durante o **Santander Bootcamp 2026 — Rust AI Developer**, evoluindo de um fluxo básico de compra de ativos para uma aplicação com autenticação, carteira, compra e venda, histórico de operações, dashboard, gráficos, área administrativa e persistência em PostgreSQL.
 
 [![Rust](https://img.shields.io/badge/Rust-2024-orange?logo=rust)](https://www.rust-lang.org/)
 [![Axum](https://img.shields.io/badge/Axum-0.8-blue)](https://github.com/tokio-rs/axum)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-blue?logo=postgresql)](https://www.postgresql.org/)
 [![SQLx](https://img.shields.io/badge/SQLx-0.9-blueviolet)](https://github.com/launchbadge/sqlx)
 [![Askama](https://img.shields.io/badge/Askama-templates-green)](https://github.com/rinja-rs/askama)
+[![Chart.js](https://img.shields.io/badge/Chart.js-charts-orange)](https://www.chartjs.org/)
+
+---
+
+## 📑 Índice
+
+- [Visão geral](#-visão-geral)
+- [Funcionalidades](#-funcionalidades)
+- [Dashboard](#-dashboard)
+- [Compra, venda e histórico](#-compra-venda-e-histórico)
+- [Rotas](#-rotas)
+- [Regras de negócio](#-regras-de-negócio)
+- [Arquitetura](#-arquitetura)
+- [Estrutura do projeto](#-estrutura-do-projeto)
+- [Tecnologias](#-tecnologias)
+- [Pré-requisitos](#-pré-requisitos)
+- [Como executar](#-como-executar)
+- [Testes](#-testes)
+- [Docker e PostgreSQL](#-docker-e-postgresql)
+- [Troubleshooting](#-troubleshooting)
+- [Evolução do projeto](#-evolução-do-projeto)
+- [O que este projeto demonstra](#-o-que-este-projeto-demonstra)
 
 ---
 
 ## 🚀 Visão geral
 
-A **Wallet Live** permite autenticar usuários, consultar os ativos disponíveis, acompanhar a carteira e registrar movimentações de compra e venda.
+A **Wallet Live** permite autenticar usuários, consultar os ativos disponíveis, acompanhar a carteira e registrar operações de compra e venda.
 
-A aplicação também possui uma área administrativa para manutenção do cadastro de ativos.
+A aplicação possui quatro áreas principais:
 
-### Funcionalidades atuais
-
-- 🔐 autenticação de usuários;
-- 🍪 sessão por cookie HTTP-only;
-- 📈 listagem dos ativos disponíveis;
-- 💰 registro de **compra (BUY)** de ativos;
-- 💸 registro de **venda (SELL)** de ativos;
-- 📊 atualização da quantidade mantida na carteira;
-- 🧾 histórico de movimentações por ativo;
-- 🕒 data/hora da operação em formato legível;
-- 🛡️ validação para impedir venda superior à quantidade disponível;
-- 🔑 autenticação administrativa;
-- 🧰 CRUD administrativo de ativos;
-- 🚫 proteção contra exclusão de ativo que possua histórico;
-- 🧪 testes automatizados com `sqlx::test`;
-- 🐘 PostgreSQL executado localmente com Docker Compose.
+- **Login e autenticação** de usuários;
+- **Carteira**, com compra, venda e histórico das operações;
+- **Dashboard**, com resumo patrimonial, distribuição da carteira e evolução do patrimônio;
+- **Administração**, protegida por autenticação administrativa, para manutenção dos ativos.
 
 ---
 
-## 🆕 Destaque da versão: compra e venda
+## ✨ Funcionalidades
 
-A principal evolução desta branch é transformar a antiga operação de compra em uma **movimentação de carteira**.
+### 👤 Usuário
 
-Cada operação agora possui um tipo explícito:
+- 🔐 autenticação de usuários;
+- 🍪 sessão por cookie HTTP-only;
+- 📝 cadastro automático quando o usuário ainda não existe;
+- 📈 visualização dos ativos disponíveis;
+- 💰 compra de ativos;
+- 💸 venda de ativos;
+- 🛡️ validação de quantidade disponível antes da venda;
+- 🧾 histórico de operações por ativo;
+- 🇧🇷 valores monetários em formato brasileiro.
+
+### 📊 Dashboard
+
+O dashboard apresenta:
+
+- patrimônio atual;
+- total investido;
+- rentabilidade percentual;
+- quantidade de ativos;
+- quantidade de operações;
+- tabela dos ativos mantidos;
+- **distribuição da carteira** em gráfico de barras horizontal;
+- **evolução do patrimônio** em gráfico de linha.
+
+Os dados dos gráficos são calculados no backend em `src/handlers/dashboard.rs`, serializados em JSON e renderizados no frontend com **Chart.js**.
+
+### 🛡️ Administração
+
+- autenticação administrativa;
+- cadastro, listagem, atualização e exclusão de ativos;
+- proteção contra exclusão de ativos que possuem histórico.
+
+---
+
+## 💰 Compra, venda e histórico
+
+Cada movimentação da carteira possui um tipo explícito:
 
 ```text
 BUY  → aumenta a quantidade mantida
 SELL → reduz a quantidade mantida
 ```
 
-O tipo é persistido no banco por meio do enum PostgreSQL `asset_operation`, com os valores `BUY` e `SELL`.
+O tipo é persistido no PostgreSQL por meio do enum `asset_operation`.
 
 ### Regra de venda
 
-Uma venda somente é aceita quando o usuário possui quantidade suficiente do ativo. Caso contrário, a aplicação retorna `400 Bad Request` com o erro `Insufficient Quantity`.
-
-Exemplo conceitual:
+Uma venda somente é aceita quando o usuário possui quantidade suficiente do ativo.
 
 ```text
 Carteira
-Bitcoin: 0.50
+Bitcoin: 0,50
 
-SELL 0.60 BTC
+SELL 0,60 BTC
       ↓
 ❌ operação recusada
 Insufficient Quantity
 
-SELL 0.30 BTC
+SELL 0,30 BTC
       ↓
 ✅ operação aceita
-Bitcoin: 0.20
+Bitcoin: 0,20
 ```
 
-O teste de integração cobre esse fluxo: tentativa de venda sem saldo, compra de 0,5, tentativa de venda de 0,6 e venda válida de 0,3, terminando com 0,2 unidades na carteira.
+### Histórico
 
----
-
-## 🧾 Histórico de transações
-
-O histórico deixou de representar apenas compras e passou a representar **operações da carteira**.
-
-Cada registro contém:
+O modelo `TransactionHistory` contém:
 
 | Campo | Descrição |
 |---|---|
@@ -87,52 +124,9 @@ Cada registro contém:
 | `occurred_at` | data/hora da operação |
 | `unit_value` | valor unitário informado |
 | `quantity_bought` | quantidade movimentada |
-| `value_delta` | variação calculada para a movimentação |
+| `value_delta` | variação calculada da operação |
 
-O modelo `TransactionHistory` formaliza essa estrutura e serializa a data/hora em ISO 8601.
-
-Na interface, o usuário pode expandir cada ativo para visualizar seu histórico, incluindo **tipo da transação**, quantidade, valor unitário, data e variação.
-
----
-
-## 🧭 Fluxo da aplicação
-
-```text
-                    ┌─────────────────┐
-                    │     Browser     │
-                    └────────┬────────┘
-                             │
-              ┌──────────────┴──────────────┐
-              │                             │
-        Área do usuário              Área administrativa
-              │                             │
-              ▼                             ▼
-        Login / sessão              Login de administrador
-              │                             │
-              ▼                             ▼
-        /assets                    /admin/assets
-              │
-       ┌──────┴──────┐
-       │             │
-      BUY           SELL
-       │             │
-       ▼             ▼
-    aumenta       valida saldo
-    quantidade        │
-                      ▼
-                   diminui
-                   quantidade
-              │
-              ▼
-        Histórico
-              │
-              ▼
-         PostgreSQL
-```
-
-A implementação do fluxo público está concentrada no handler de portfolio e utiliza os repositories de assets e de ativos pertencentes ao usuário.
-
-> **Nota:** apesar de a implementação estar organizada em `portfolio.rs`, a rota HTTP atualmente utilizada pela interface é `/assets`. O módulo de rotas registra `GET /assets` e `POST /assets`.
+Na interface, as operações são apresentadas em português como **COMPRA** e **VENDA**.
 
 ---
 
@@ -142,14 +136,26 @@ A implementação do fluxo público está concentrada no handler de portfolio e 
 
 | Método | Rota | Função |
 |---|---|---|
-| `GET` | `/` | Entrada da aplicação |
+| `GET` | `/` | Entrada da aplicação e redirecionamento conforme autenticação |
 | `GET` | `/login` | Exibe a tela de login |
-| `POST` | `/login` | Autentica ou cadastra usuário |
+| `POST` | `/login` | Autentica ou cadastra o usuário |
 | `GET` | `/logout` | Encerra a sessão |
-| `GET` | `/assets` | Exibe carteira, ativos e histórico |
-| `POST` | `/assets` | Registra uma operação `BUY` ou `SELL` |
+| `GET` | `/assets` | Exibe a carteira e seus ativos |
+| `POST` | `/assets` | Registra uma compra/venda |
+| `GET` | `/dashboard` | Exibe o dashboard da carteira |
 
-### Administração
+### API de ativos
+
+As rotas abaixo são montadas sob `/api`:
+
+| Método | Rota | Função |
+|---|---|---|
+| `GET` | `/api/assets` | Lista ativos |
+| `POST` | `/api/assets` | Cria ativo |
+| `PATCH` | `/api/assets` | Atualiza ativo |
+| `DELETE` | `/api/assets` | Exclui ativo |
+
+### Administração web
 
 | Método | Rota | Função |
 |---|---|---|
@@ -171,11 +177,11 @@ Uma operação `BUY` registra a quantidade adquirida e aumenta a posição do us
 
 ### Venda
 
-Uma operação `SELL` primeiro verifica a quantidade atualmente mantida pelo usuário. Se a quantidade solicitada for maior que a posição disponível, a operação é rejeitada.
+Uma operação `SELL` reduz a posição do usuário. A aplicação bloqueia vendas superiores à quantidade atualmente disponível.
 
 ### Exclusão administrativa
 
-Um ativo com histórico não pode ser excluído. O erro correspondente é convertido para `409 Conflict`, preservando a integridade histórica da carteira.
+Um ativo que possui histórico de operações não pode ser excluído, preservando a integridade histórica da carteira.
 
 ```text
 Ativo inexistente       → 404 Not Found
@@ -191,11 +197,13 @@ Operação válida         → processamento normal
 ```mermaid
 flowchart TD
     Browser[🌐 Browser] --> Login[🔐 Login]
-    Browser --> Assets[📈 /assets]
+    Browser --> Wallet[💼 /assets]
+    Browser --> Dashboard[📊 /dashboard]
     Browser --> Admin[🛡️ /admin]
 
     Login --> Axum[⚙️ Axum]
-    Assets --> Axum
+    Wallet --> Axum
+    Dashboard --> Axum
     Admin --> Axum
 
     Axum --> Handlers[🎯 Handlers]
@@ -205,9 +213,10 @@ flowchart TD
 
     Repositories --> SQLx[SQLx]
     SQLx --> PostgreSQL[(🐘 PostgreSQL)]
+    Dashboard --> Charts[📊 Chart.js]
 ```
 
-A estrutura atual separa autenticação, rotas, handlers, modelos, repositories e templates, permitindo que a funcionalidade de portfolio evolua sem concentrar toda a lógica em um único módulo.
+A aplicação separa responsabilidades entre **rotas**, **handlers**, **autenticação**, **models**, **repositories** e **templates**.
 
 ---
 
@@ -216,8 +225,6 @@ A estrutura atual separa autenticação, rotas, handlers, modelos, repositories 
 ```text
 .
 ├── migrations/
-│   ├── ...
-│   └── 20260818125714_add_operation_type_to_owned_assets.*.sql
 ├── src/
 │   ├── auth/
 │   │   ├── admin.rs
@@ -225,11 +232,15 @@ A estrutura atual separa autenticação, rotas, handlers, modelos, repositories 
 │   ├── handlers/
 │   │   ├── admin.rs
 │   │   ├── assets.rs
+│   │   ├── dashboard.rs
 │   │   ├── login.rs
-│   │   └── portfolio.rs
+│   │   ├── wallet.rs
+│   │   ├── fixtures/
+│   │   └── snapshots/
 │   ├── models/
 │   │   ├── asset.rs
 │   │   ├── owned_asset.rs
+│   │   ├── portfolio_summary.rs
 │   │   └── transaction_history.rs
 │   ├── repositories/
 │   │   ├── assets.rs
@@ -237,32 +248,28 @@ A estrutura atual separa autenticação, rotas, handlers, modelos, repositories 
 │   │   └── users.rs
 │   ├── routes/
 │   │   ├── admin.rs
+│   │   ├── api.rs
 │   │   ├── assets.rs
+│   │   ├── dashboard.rs
 │   │   ├── login.rs
-│   │   └── portfolio.rs
+│   │   ├── mod.rs
+│   │   └── wallet.rs
 │   ├── app.rs
 │   ├── error.rs
 │   └── main.rs
 ├── templates/
-│   ├── admin_assets.html
 │   ├── admin_login.html
 │   ├── assets.html
-│   └── login.html
-├── .env
-├── .gitignore
+│   ├── dashboard.html
+│   ├── login.html
+│   └── wallet.html
+├── compose.yml
 ├── Cargo.toml
 ├── Cargo.lock
-├── CHANGELOG.md
-├── CODE_OF_CONDUCT.md
-├── CONTRIBUTING.md
-├── LICENSE-APACHE
-├── LICENSE-MIT
-├── README.md
-├── SECURITY.md
-└── SUPPORT.md
+└── README.md
 ```
 
-> A estrutura acima representa os módulos relevantes da aplicação. Arquivos auxiliares e demais migrações podem existir além dos itens destacados.
+> A estrutura acima destaca os módulos principais. Arquivos auxiliares, snapshots e migrações podem existir além dos itens apresentados.
 
 ---
 
@@ -271,18 +278,19 @@ A estrutura atual separa autenticação, rotas, handlers, modelos, repositories 
 - **Rust 2024** — linguagem principal;
 - **Axum 0.8** — HTTP e roteamento;
 - **Tokio** — runtime assíncrono;
-- **SQLx 0.9** — acesso ao PostgreSQL e testes de integração;
-- **PostgreSQL 18.6 Alpine** — banco de dados local;
-- **Askama 0.16** — templates server-side;
+- **SQLx 0.9** — acesso ao PostgreSQL, migrações e testes;
+- **PostgreSQL 18** — banco de dados;
+- **Askama** — templates server-side;
 - **axum-extra** — cookies;
-- **JWT Simple** — autenticação;
-- **password-auth** — autenticação por senha;
+- **JWT Simple** — autenticação baseada em token;
+- **password-auth** — hashing e verificação de senhas;
 - **Serde / Serde JSON** — serialização;
 - **dotenvy** — variáveis de ambiente;
 - **thiserror** — tratamento tipado de erros;
 - **tracing / tracing-subscriber** — observabilidade básica;
-- **Insta** — suporte a testes/snapshots;
-- **Docker Compose** — ambiente local.
+- **Chart.js** — gráficos do dashboard;
+- **Docker Compose** — ambiente local;
+- **Insta** — suporte a snapshots de testes.
 
 ---
 
@@ -291,7 +299,7 @@ A estrutura atual separa autenticação, rotas, handlers, modelos, repositories 
 - Rust com suporte à Edition 2024;
 - Cargo;
 - Docker e Docker Compose;
-- SQLx CLI para executar migrações manualmente.
+- SQLx CLI.
 
 Instalação do SQLx CLI:
 
@@ -308,12 +316,7 @@ cargo install sqlx-cli --no-default-features --features postgres
 ```bash
 git clone https://github.com/josearodrigues/rust-fullstack-carteira-investimentos.git
 cd rust-fullstack-carteira-investimentos
-```
-
-Se estiver trabalhando especificamente nesta feature:
-
-```bash
-git checkout feat/portfolio-buy-sell
+git checkout feat/dasboard
 ```
 
 ### 2. Configure o ambiente
@@ -325,7 +328,7 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
 ADMIN_SECRET_KEY=seu-token-admin
 ```
 
-> Não publique credenciais reais no repositório. O `.env` existente na branch contém configuração de desenvolvimento e deve ser tratado como arquivo sensível.
+> Não publique credenciais reais no repositório. O `.env` deve ser tratado como arquivo sensível.
 
 ### 3. Suba o PostgreSQL
 
@@ -333,15 +336,13 @@ ADMIN_SECRET_KEY=seu-token-admin
 docker compose -f compose.yml up -d
 ```
 
-O Compose atual utiliza PostgreSQL `18.6-alpine3.24` e um volume persistente para `/var/lib/postgresql`.
-
 ### 4. Execute as migrações
 
 ```bash
 sqlx migrate run
 ```
 
-A feature de compra/venda adiciona o tipo PostgreSQL `asset_operation` e a coluna `operation_type` em `owned_assets`.
+As migrações incluem a estrutura necessária para registrar o tipo das operações de carteira (`BUY`/`SELL`).
 
 ### 5. Inicie a aplicação
 
@@ -353,27 +354,47 @@ cargo run
 
 - Login: `http://localhost:3000/login`
 - Carteira: `http://localhost:3000/assets`
+- Dashboard: `http://localhost:3000/dashboard`
 - Administração: `http://localhost:3000/admin/login`
 
 ---
 
 ## 🧪 Testes
 
+A suíte atual possui **27 testes automatizados**, distribuídos principalmente entre handlers, repositories e models.
+
 Execute:
 
 ```bash
-cargo test
+cargo test --all-features
 ```
 
-Os testes que exercitam persistência utilizam `sqlx::test`, portanto o PostgreSQL precisa estar disponível. A funcionalidade de compra/venda possui teste para validar venda sem quantidade suficiente, compra, venda parcial e quantidade final da posição.
+### Cobertura atual
 
-### Checklist recomendado
+- autenticação e login;
+- logout e cookies;
+- cadastro automático de usuário;
+- CRUD de ativos;
+- operações administrativas;
+- proteção de exclusão de ativos com histórico;
+- compra e venda de ativos;
+- validação de venda sem quantidade suficiente;
+- persistência e leitura do histórico;
+- cálculos de patrimônio e rentabilidade;
+- renderização do dashboard;
+- dados de distribuição da carteira;
+- dados de evolução do patrimônio.
+
+Os testes que precisam de banco utilizam `sqlx::test` e os fixtures ficam organizados junto aos handlers que os utilizam.
+
+### Verificação de qualidade
 
 ```bash
-cargo fmt -- --check
-cargo check
-cargo test
+cargo test --all-features
+cargo clippy --all-targets --all-features -- -D warnings
 ```
+
+Na revisão desta feature, os dois comandos passaram com sucesso: **27 testes passaram e o Clippy não apresentou warnings**.
 
 ---
 
@@ -414,7 +435,7 @@ sqlx migrate run
 
 ### `Connection refused`
 
-Confirme se o container está ativo:
+Confirme se o PostgreSQL está ativo:
 
 ```bash
 docker compose -f compose.yml ps
@@ -423,7 +444,7 @@ docker compose -f compose.yml exec db pg_isready -U postgres
 
 ### Migração não executada
 
-Verifique o `DATABASE_URL` e execute:
+Confirme o `DATABASE_URL` e execute:
 
 ```bash
 sqlx migrate run
@@ -441,25 +462,32 @@ verifique a quantidade atualmente mantida do ativo. A implementação bloqueia u
 
 ---
 
-## 📚 Evolução do projeto
+## 📈 Evolução do projeto
 
-### Etapa anterior — Administração de Assets
+### Administração de Assets
 
 A aplicação ganhou uma área administrativa protegida para criação, consulta, atualização e exclusão de ativos, com proteção contra remoção de ativos que possuem histórico.
 
-### Etapa atual — Portfolio Buy/Sell
+### Portfolio Buy/Sell
 
-A evolução desta branch amplia o conceito de compra para **operações de carteira**:
+O conceito de compra foi ampliado para representar operações completas de carteira:
 
-- criação do enum `BUY` / `SELL`;
+- enum `BUY` / `SELL`;
 - persistência do tipo da operação;
-- novo modelo `TransactionHistory`;
+- modelo `TransactionHistory`;
 - compra e venda na mesma interface;
-- validação de quantidade disponível para venda;
+- validação da quantidade disponível;
 - atualização da posição após operações;
-- histórico com tipo de transação;
-- testes automatizados dos cenários de compra e venda;
-- reorganização de handlers e rotas para acomodar o fluxo de portfolio.
+- histórico detalhado;
+- testes dos cenários de compra e venda.
+
+### Dashboard
+
+A aplicação passou a possuir um dashboard dedicado, com resumo patrimonial, total investido, rentabilidade, quantidade de ativos e operações, distribuição percentual da carteira e evolução histórica do patrimônio.
+
+Os gráficos passaram a utilizar dados reais calculados no backend, em vez de dados de exemplo no template.
+
+Também houve reorganização da responsabilidade dos módulos: os testes foram mantidos próximos dos handlers e repositories correspondentes, e os testes de rota que duplicavam a cobertura dos handlers foram removidos.
 
 ---
 
@@ -468,58 +496,44 @@ A evolução desta branch amplia o conceito de compra para **operações de cart
 Este projeto exercita conceitos importantes de Rust e desenvolvimento backend/fullstack:
 
 - programação assíncrona com Tokio;
-- construção de aplicações web com Axum;
+- aplicações web com Axum;
 - extractors e estado compartilhado;
-- autenticação e cookies;
-- JWT e hashing de senhas;
+- autenticação, cookies e JWT;
+- hashing de senhas;
 - templates server-side com Askama;
 - persistência relacional com PostgreSQL;
-- migrações e testes com SQLx;
-- modelagem de operações de domínio;
-- tratamento explícito de erros HTTP;
-- testes de integração;
-- separação entre rotas, handlers, modelos e repositories;
-- Docker para ambiente de desenvolvimento.
+- migrações e queries com SQLx;
+- testes de integração com `sqlx::test`;
+- organização de testes por responsabilidade;
+- serialização com Serde;
+- tratamento tipado de erros;
+- cálculos de carteira e rentabilidade;
+- preparação de dados para visualização;
+- gráficos no frontend com Chart.js;
+- Docker Compose para ambiente de desenvolvimento;
+- qualidade de código com `cargo fmt`, `cargo test` e `cargo clippy`.
 
 ---
 
-## 🗺️ Próximos passos sugeridos
+## 📚 Próximos passos possíveis
 
-- [ ] adicionar validações de entrada para valores e quantidades não positivos;
-- [ ] evitar `f64` para cálculos monetários críticos, avaliando representação decimal apropriada;
-- [ ] reforçar testes de autorização e cenários negativos;
-- [ ] adicionar CI com `cargo fmt`, `cargo check` e `cargo test`;
-- [ ] melhorar a gestão de sessão e cookies para produção;
-- [ ] adicionar proteção CSRF aos formulários autenticados;
-- [ ] evoluir a autenticação administrativa para usuários/roles persistidos;
-- [ ] adicionar métricas e observabilidade estruturada;
-- [ ] preparar deploy com PostgreSQL gerenciado.
+Algumas evoluções naturais para o projeto são:
 
----
-
-## 📄 Documentação e colaboração
-
-A raiz do projeto também contém documentos de apoio para colaboração, segurança, suporte e histórico de mudanças:
-
-- `CHANGELOG.md` — histórico de alterações;
-- `CONTRIBUTING.md` — orientações para contribuição;
-- `SECURITY.md` — política de segurança;
-- `SUPPORT.md` — suporte;
-- `CODE_OF_CONDUCT.md` — código de conduta.
-
-Esses arquivos acompanham a evolução do projeto e devem permanecer alinhados com a natureza da aplicação Wallet Live.
+- melhorar a responsividade do dashboard;
+- adicionar filtros de período ao histórico;
+- adicionar mais indicadores financeiros;
+- criar testes adicionais para cenários de borda da carteira;
+- adicionar testes de autenticação de ponta a ponta;
+- preparar a aplicação para deploy em ambiente cloud;
+- evoluir observabilidade e configuração para produção.
 
 ---
 
 ## 📄 Licença
 
-Projeto desenvolvido para fins educacionais durante o **Santander Bootcamp 2026 — Rust AI Developer**.
-
-Os arquivos `LICENSE-MIT` e `LICENSE-APACHE` fazem parte do repositório.
+Este projeto mantém as licenças **MIT** e **Apache-2.0**, conforme os arquivos de licença presentes no repositório.
 
 ---
 
-<p align="center">
-  <strong>Rust + Axum + PostgreSQL + Askama</strong><br>
-  Da compra à venda: uma carteira de investimentos evoluindo com Rust. 🦀📈
-</p>
+**Santander Bootcamp 2026 — Rust AI Developer**  
+Projeto desenvolvido como parte da jornada de aprendizado em Rust e desenvolvimento fullstack.
