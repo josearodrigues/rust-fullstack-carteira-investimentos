@@ -7,17 +7,13 @@ use serde::Deserialize;
 use tokio::try_join;
 
 use crate::{
-    auth::user::User,
-    error::AppError,
-    models::asset::Asset,
-    models::owned_asset::OwnedAsset,
-    models::transaction_history::AssetOperation,
-    repositories::assets::AssetRepository,
+    auth::user::User, error::AppError, models::asset::Asset, models::owned_asset::OwnedAsset,
+    models::transaction_history::AssetOperation, repositories::assets::AssetRepository,
     repositories::owned_assets::OwnedAssetRepository,
 };
 
 #[derive(Template)]
-#[template(path = "assets.html")]
+#[template(path = "wallet.html")]
 pub struct AssetsPage {
     owned_assets: Vec<OwnedAsset>,
     available_assets: Vec<Asset>,
@@ -86,7 +82,10 @@ pub async fn purchase_asset(
 pub mod filters {
     use askama;
     use time::{
-        OffsetDateTime, format_description::StaticFormatDescription, macros::format_description,
+        OffsetDateTime,
+        UtcOffset,
+        format_description::StaticFormatDescription,
+        macros::format_description,
     };
 
     #[askama::filter_fn]
@@ -95,9 +94,13 @@ pub mod filters {
         _env: &dyn askama::Values,
     ) -> askama::Result<String> {
         const HUMAN_READABLE_FORMAT: StaticFormatDescription =
-            format_description!(version = 2, "[year]-[month]-[day] [hour]:[minute]");
+            format_description!(version = 2, "[day]/[month]/[year] [hour]:[minute]");
+
+        let brazil_offset = UtcOffset::from_hms(-3, 0, 0)
+            .map_err(askama::Error::custom)?;
 
         datetime
+            .to_offset(brazil_offset)
             .format(HUMAN_READABLE_FORMAT)
             .map_err(askama::Error::custom)
     }
@@ -149,7 +152,8 @@ mod tests {
             quantity: 0.6,
             operation_type: AssetOperation::Sell,
         };
-        let sell_res1 = purchase_asset(owned_repo.clone(), user.clone(), Form(form_sell_too_much)).await;
+        let sell_res1 =
+            purchase_asset(owned_repo.clone(), user.clone(), Form(form_sell_too_much)).await;
         assert!(matches!(sell_res1, Err(AppError::InsufficientQuantity)));
 
         let form_sell_ok = PurchaseAssetForm {
