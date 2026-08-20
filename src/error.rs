@@ -40,7 +40,7 @@ impl IntoResponse for AppError {
         let status = match self {
             Self::UsernameTaken | Self::MissingAuthorization | Self::InsufficientQuantity => {
                 StatusCode::BAD_REQUEST
-            },
+            }
             Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
             Self::AssetDoesNotExist | Self::UserDoesNotExist => StatusCode::NOT_FOUND,
             Self::AssetCannotBeDeletedBecauseHasHistory => StatusCode::CONFLICT,
