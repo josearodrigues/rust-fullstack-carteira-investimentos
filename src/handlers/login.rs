@@ -185,8 +185,7 @@ mod tests {
 
     #[sqlx::test]
     async fn logout_clears_cookie(_pool: PgPool) -> Result<(), sqlx::Error> {
-        let jar = CookieJar::new()
-            .add(Cookie::build(("token", "dummy")).http_only(true));
+        let jar = CookieJar::new().add(Cookie::build(("token", "dummy")).http_only(true));
         let response = logout(jar).await.into_response();
         // Verify redirect location only
         let location = response.headers().get(LOCATION).unwrap().to_str().unwrap();

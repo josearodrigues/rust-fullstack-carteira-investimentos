@@ -1,5 +1,9 @@
 use askama::Template;
-use axum::{extract::{Path, State}, Form, response::{Html, IntoResponse, Redirect}};
+use axum::{
+    Form,
+    extract::{Path, State},
+    response::{Html, IntoResponse, Redirect},
+};
 use axum_extra::extract::{CookieJar, cookie::Cookie};
 use serde::Deserialize;
 
@@ -47,15 +51,12 @@ pub async fn logout(jar: CookieJar) -> impl IntoResponse {
 }
 
 #[derive(Template)]
-#[template(path = "admin_assets.html")]
+#[template(path = "assets.html")]
 pub struct AdminAssetsPage {
     assets: Vec<Asset>,
 }
 
-pub async fn list_assets(
-    _: Admin,
-    repository: AssetRepository,
-) -> Result<Html<String>, AppError> {
+pub async fn list_assets(_: Admin, repository: AssetRepository) -> Result<Html<String>, AppError> {
     let assets = repository.list_assets().await?;
 
     let html = AdminAssetsPage { assets }.render()?;
@@ -120,22 +121,19 @@ pub async fn delete_asset(
 #[cfg(test)]
 mod tests {
     use axum::{
+        Form,
         extract::Path,
         http::{
-            header::{LOCATION, SET_COOKIE},
             StatusCode,
+            header::{LOCATION, SET_COOKIE},
         },
         response::IntoResponse,
-        Form,
     };
     use axum_extra::extract::cookie::CookieJar;
     use sqlx::PgPool;
 
     use crate::{
-        app::AppState,
-        auth::admin::Admin,
-        error::AppError,
-        repositories::assets::AssetRepository,
+        app::AppState, auth::admin::Admin, error::AppError, repositories::assets::AssetRepository,
     };
 
     use super::*;
@@ -181,7 +179,12 @@ mod tests {
             .into_response();
 
         assert_redirect_to(&response, "/admin/assets");
-        let set_cookie = response.headers().get(SET_COOKIE).unwrap().to_str().unwrap();
+        let set_cookie = response
+            .headers()
+            .get(SET_COOKIE)
+            .unwrap()
+            .to_str()
+            .unwrap();
         assert!(set_cookie.contains("admin_token=super-secret"));
         assert!(set_cookie.contains("HttpOnly"));
     }

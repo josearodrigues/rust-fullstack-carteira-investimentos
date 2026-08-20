@@ -1,16 +1,13 @@
-use axum::{Router, routing::{get, post}};
+use axum::{
+    Router,
+    routing::{get, post},
+};
 
 use crate::{
     app::AppState,
     handlers::admin::{
-        create_asset,
-        delete_asset,
-        list_assets,
-        login,
-        login_page,
-        logout,
-        update_asset,
-    }
+        create_asset, delete_asset, list_assets, login, login_page, logout, update_asset,
+    },
 };
 
 pub fn router() -> Router<AppState> {

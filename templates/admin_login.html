@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,21 +16,21 @@
 
         <div class="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_0_40px_rgba(34,211,238,0.12)]">
             <div class="border-b border-white/10 px-8 pt-8 pb-6">
-                <p class="text-xs uppercase tracking-[0.35em] text-cyan-400/80">wallet live</p>
-                <h1 class="mt-3 text-2xl font-semibold tracking-tight">admin access</h1>
+                <p class="text-xs uppercase tracking-[0.35em] text-cyan-400/80">Carteira de Investimentos</p>
+                <h1 class="mt-3 text-2xl font-semibold tracking-tight">Acesso administrativo</h1>
                 <p class="mt-2 text-sm leading-6 text-white/50">
-                    Sign in to manage assets, edit prices, and control the admin area.
+                    Faça login para gerenciar ativos, editar preços e controlar a área administrativa.
                 </p>
             </div>
 
             <form method="POST" action="/admin/login" class="space-y-5 px-8 py-8">
                 <div>
-                    <label for="admin-token" class="mb-1.5 block text-sm text-white/50">admin token</label>
+                    <label for="admin-token" class="mb-1.5 block text-sm uppercase text-white/50">Token</label>
                     <input
                         id="admin-token"
                         type="password"
                         name="admin_token"
-                        placeholder="enter admin secret"
+                        placeholder="insira o token do administrador"
                         required
                         autocomplete="current-password"
                         class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/30 transition-all duration-300 focus:outline-none focus:border-cyan-400/50 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)]"
@@ -38,18 +38,17 @@
                 </div>
 
                 <div class="rounded-xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-200/90">
-                    Restricted area. Only authorized administrators should continue.
+                    <b>ÁREA RESTRITA!</b> Somente administradores autorizados devem continuar.
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-1">
-                    <a
-                        href="/login"
+                    <a href="/login"
                         class="rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-sm text-white/60 transition-all duration-300 hover:bg-white/10 hover:text-white"
-                    >user login</a>
+                    >Login do Usuário</a>
                     <button
                         type="submit"
                         class="rounded-xl border border-cyan-400/30 bg-cyan-500/20 px-5 py-2.5 text-sm font-medium text-cyan-400 transition-all duration-300 hover:bg-cyan-500/30 hover:shadow-[0_0_15px_rgba(34,211,238,0.2)]"
-                    >enter</button>
+                    >Enviar</button>
                 </div>
             </form>
         </div>

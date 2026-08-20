@@ -1,13 +1,8 @@
-use axum::{Router, routing::get};
 use crate::{
     app::AppState,
-    handlers::login::{
-        index,
-        login,
-        login_page,
-        logout
-    }
+    handlers::login::{index, login, login_page, logout},
 };
+use axum::{Router, routing::get};
 
 pub fn router() -> Router<AppState> {
     Router::new()
