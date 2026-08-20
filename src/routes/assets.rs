@@ -1,4 +1,4 @@
-use axum::{routing::get, Router};
+use axum::{Router, routing::get};
 
 use crate::app::AppState;
 use crate::handlers::assets::{create_asset, delete_asset, list_assets, update_asset};
@@ -92,6 +92,9 @@ mod tests {
 
         let result = delete_asset(Admin, db.into(), Json(request)).await;
 
-        assert!(matches!(result, Err(AppError::AssetCannotBeDeletedBecauseHasHistory)));
+        assert!(matches!(
+            result,
+            Err(AppError::AssetCannotBeDeletedBecauseHasHistory)
+        ));
     }
 }

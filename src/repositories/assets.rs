@@ -20,7 +20,8 @@ impl AssetRepository {
     pub async fn list_assets(&self) -> sqlx::Result<Vec<Asset>> {
         sqlx::query_as::<_, Asset>(
             "SELECT id, name, unit_value
-             FROM assets;",
+             FROM assets
+             ORDER BY name;",
         )
         .fetch_all(&self.db)
         .await
