@@ -1,5 +1,5 @@
 ---
-source: src/routes/assets.rs
+source: src/handlers/assets.rs
 expression: updated_asset
 ---
 {

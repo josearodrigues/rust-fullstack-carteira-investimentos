@@ -201,8 +201,8 @@ mod tests {
         assert_eq!(owned[0].value_delta, 160.0);
         assert_eq!(owned[0].purchase_history.0.len(), 2);
 
-        let tx1 = &owned[0].purchase_history.0[0];
-        let tx2 = &owned[0].purchase_history.0[1];
+        let tx1 = &owned[0].purchase_history.0[1];
+        let tx2 = &owned[0].purchase_history.0[0];
 
         assert_eq!(tx1.operation_type, AssetOperation::Buy);
         assert_eq!(tx1.value_delta, 200.0);

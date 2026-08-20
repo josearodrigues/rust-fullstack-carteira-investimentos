@@ -122,3 +122,181 @@ pub async fn assets(
 
     Ok(Html(html))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        app::AppState,
+        auth::user::UnauthenticatedUser,
+        repositories::users::UserRepository,
+        models::transaction_history::AssetOperation,
+    };
+    use sqlx::PgPool;
+
+    fn test_state(db: PgPool) -> AppState {
+        AppState {
+            db,
+            admin_token: "test-token".to_string(),
+        }
+    }
+
+    #[sqlx::test]
+    async fn test_dashboard_renders_summary_and_assets(db: PgPool) {
+        let user = UnauthenticatedUser::new(
+            "satoshi".to_string(),
+            "password".to_string(),
+        )
+        .register(UserRepository::from(db.clone()))
+        .await
+        .unwrap();
+
+        sqlx::query(
+            "INSERT INTO assets (id, name, unit_value)
+             VALUES (1, 'Bitcoin', 10.0)",
+        )
+        .execute(&db)
+        .await
+        .unwrap();
+
+        let repository = OwnedAssetRepository::from(db.clone());
+
+        repository
+            .insert_owned_asset(
+                user.id(),
+                1,
+                2.0,
+                5.0,
+                AssetOperation::Buy,
+            )
+            .await
+            .unwrap();
+
+        let result = assets(
+            State(test_state(db.clone())),
+            repository,
+            user,
+        )
+        .await
+        .unwrap();
+
+        let html = result.0;
+
+        assert!(html.contains("Painel de Investimentos"));
+        assert!(html.contains("Bitcoin"));
+        assert!(html.contains("Patrimônio"));
+        assert!(html.contains("Investido"));
+        assert!(html.contains("Rentabilidade"));
+        assert!(html.contains("Distribuição da Carteira"));
+        assert!(html.contains("Evolução do Patrimônio"));
+    }
+
+    #[sqlx::test]
+    async fn test_dashboard_distribution_contains_asset_data(db: PgPool) {
+        let user = UnauthenticatedUser::new(
+            "satoshi".to_string(),
+            "password".to_string(),
+        )
+        .register(UserRepository::from(db.clone()))
+        .await
+        .unwrap();
+
+        sqlx::query(
+            "INSERT INTO assets (id, name, unit_value)
+             VALUES
+                (1, 'Bitcoin', 100.0),
+                (2, 'Ethereum', 50.0)",
+        )
+        .execute(&db)
+        .await
+        .unwrap();
+
+        let repository = OwnedAssetRepository::from(db.clone());
+
+        repository
+            .insert_owned_asset(user.id(), 1, 2.0, 80.0, AssetOperation::Buy)
+            .await
+            .unwrap();
+
+        repository
+            .insert_owned_asset(user.id(), 2, 2.0, 40.0, AssetOperation::Buy)
+            .await
+            .unwrap();
+
+        let result = assets(
+            State(test_state(db.clone())),
+            repository,
+            user,
+        )
+        .await
+        .unwrap();
+
+        let html = result.0;
+
+        assert!(html.contains("Bitcoin"));
+        assert!(html.contains("Ethereum"));
+
+        // Os dados reais são enviados ao JavaScript.
+        assert!(html.contains("\"name\":\"Bitcoin\""));
+        assert!(html.contains("\"name\":\"Ethereum\""));
+    }
+
+    #[sqlx::test]
+    async fn test_dashboard_history_contains_operations(db: PgPool) {
+        let user = UnauthenticatedUser::new(
+            "satoshi".to_string(),
+            "password".to_string(),
+        )
+        .register(UserRepository::from(db.clone()))
+        .await
+        .unwrap();
+
+        sqlx::query(
+            "INSERT INTO assets (id, name, unit_value)
+             VALUES (1, 'Bitcoin', 100.0)",
+        )
+        .execute(&db)
+        .await
+        .unwrap();
+
+        let repository = OwnedAssetRepository::from(db.clone());
+
+        repository
+            .insert_owned_asset(
+                user.id(),
+                1,
+                2.0,
+                80.0,
+                AssetOperation::Buy,
+            )
+            .await
+            .unwrap();
+
+        repository
+            .insert_owned_asset(
+                user.id(),
+                1,
+                1.0,
+                90.0,
+                AssetOperation::Sell,
+            )
+            .await
+            .unwrap();
+
+        let result = assets(
+            State(test_state(db.clone())),
+            repository,
+            user,
+        )
+        .await
+        .unwrap();
+
+        let html = result.0;
+
+        // O dashboard deve gerar o JSON utilizado pelo gráfico
+        // de evolução do patrimônio.
+        assert!(html.contains("Evolução do Patrimônio"));
+        assert!(html.contains("history"));
+        assert!(html.contains("Bitcoin"));
+    }
+}

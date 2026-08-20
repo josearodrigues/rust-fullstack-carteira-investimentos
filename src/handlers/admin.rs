@@ -138,13 +138,6 @@ mod tests {
 
     use super::*;
 
-    fn db_state(db: PgPool, admin_token: &str) -> AppState {
-        AppState {
-            db,
-            admin_token: admin_token.to_string(),
-        }
-    }
-
     fn lazy_state(admin_token: &str) -> AppState {
         AppState {
             db: PgPool::connect_lazy("postgres://postgres:postgres@localhost:5432/postgres")
@@ -162,7 +155,7 @@ mod tests {
     async fn test_login_page_renders() {
         let Html(html) = login_page().await.expect("success");
 
-        assert!(html.contains("admin access"));
+        assert!(html.contains("Acesso administrativo"));
         assert!(html.contains("admin_token"));
     }
 
@@ -205,7 +198,7 @@ mod tests {
     async fn test_list_assets_renders_admin_page(db: PgPool) {
         let Html(html) = list_assets(Admin, db.into()).await.expect("success");
 
-        assert!(html.contains("asset management"));
+        assert!(html.contains("Gerenciamento de Ativos"));
         assert!(html.contains("Bitcoin"));
     }
 
