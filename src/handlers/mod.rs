@@ -1,4 +1,5 @@
-pub mod assets;
 pub mod admin;
+pub mod assets;
+pub mod dashboard;
 pub mod login;
-pub mod portfolio;
+pub mod wallet;
