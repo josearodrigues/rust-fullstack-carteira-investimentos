@@ -1,6 +1,6 @@
 # Suporte
 
-Para dúvidas sobre a Wallet Live ou problemas durante o desenvolvimento:
+Para dúvidas sobre a Wallet ou problemas durante o desenvolvimento:
 
 - consulte o `README.md`;
 - verifique o `CHANGELOG.md`;

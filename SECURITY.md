@@ -8,7 +8,7 @@ Abra uma comunicação privada pelo GitHub descrevendo o problema, o impacto e, 
 
 ## Escopo
 
-A Wallet Live é uma aplicação web de gerenciamento de carteira de investimentos, com autenticação, persistência em PostgreSQL e área administrativa.
+A Wallet é uma aplicação web de gerenciamento de carteira de investimentos, com autenticação, persistência em PostgreSQL e área administrativa.
 
 A aplicação contém mecanismos de autenticação por token/cookie e regras de autorização para a área administrativa. O projeto está em desenvolvimento educacional e não deve ser considerado pronto para uso financeiro em produção.
 

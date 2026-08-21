@@ -1,6 +1,6 @@
 # Changelog
 
-Todas as mudanças relevantes da **Wallet Live** são documentadas neste arquivo.
+Todas as mudanças relevantes da **Wallet** são documentadas neste arquivo.
 
 O formato segue uma adaptação do [Keep a Changelog](https://keepachangelog.com/) e o projeto utiliza [Versionamento Semântico (SemVer)](https://semver.org/lang/pt-BR/) como referência.
 

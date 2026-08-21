@@ -1,6 +1,6 @@
 # Contribuindo
 
-Obrigado pelo interesse em contribuir com a **Wallet Live**!
+Obrigado pelo interesse em contribuir com a **Wallet**!
 
 Contribuições são bem-vindas, especialmente correções, testes, melhorias de documentação e novas funcionalidades relacionadas ao projeto.
 

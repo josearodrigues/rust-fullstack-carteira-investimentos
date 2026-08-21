@@ -1,8 +1,8 @@
-# 💼 Wallet Live — Carteira de Investimentos em Rust
+# 💼 Wallet - Carteira de Investimentos em Rust
 
 > Aplicação web fullstack desenvolvida em **Rust** para gerenciamento de uma carteira de investimentos.
 >
-> Projeto desenvolvido durante o **Santander Bootcamp 2026 — Rust AI Developer**, evoluindo de um fluxo básico de compra de ativos para uma aplicação com autenticação, carteira, compra e venda, histórico de operações, dashboard, gráficos, área administrativa e persistência em PostgreSQL.
+> Projeto desenvolvido durante o **Santander Bootcamp 2026 - Rust AI Developer**, evoluindo de um fluxo básico de compra de ativos para uma aplicação com autenticação, carteira, compra e venda, histórico de operações, dashboard, gráficos, área administrativa e persistência em PostgreSQL.
 
 [![Rust](https://img.shields.io/badge/Rust-2024-orange?logo=rust)](https://www.rust-lang.org/)
 [![Axum](https://img.shields.io/badge/Axum-0.8-blue)](https://github.com/tokio-rs/axum)
@@ -36,7 +36,7 @@
 
 ## 🚀 Visão geral
 
-A **Wallet Live** permite autenticar usuários, consultar os ativos disponíveis, acompanhar a carteira e registrar operações de compra e venda.
+A **Wallet** permite autenticar usuários, consultar os ativos disponíveis, acompanhar a carteira e registrar operações de compra e venda.
 
 A aplicação possui quatro áreas principais:
 
@@ -321,10 +321,20 @@ git checkout feat/dasboard
 
 ### 2. Configure o ambiente
 
-Crie um `.env` local com:
+Duplique o arquivo `.env.example` para `.env` e configure conforme as credenciais do seu banco de dados:
 
 ```env
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
+# Configurações do Banco de Dados
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=postgres
+DB_HOST=localhost
+DB_PORT=5432
+
+# URL de conexão local (resolvida pelo dotenvy / CLI do sqlx)
+DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+
+# Chave secreta de administração
 ADMIN_SECRET_KEY=seu-token-admin
 ```
 
@@ -338,7 +348,9 @@ Para rodar a aplicação localmente de forma interativa com `cargo run`, suba ap
 docker compose up db -d
 ```
 
-### 4. Execute as migrações
+### 4. Execute as migrações (Opcional)
+
+A aplicação executa as migrações automaticamente ao iniciar. Caso você queira executá-las ou inspecioná-las manualmente via terminal local, basta rodar o comando abaixo (que lê a `DATABASE_URL` automaticamente do arquivo `.env` configurado):
 
 ```bash
 sqlx migrate run
@@ -355,8 +367,6 @@ cargo run
 ### 6. Acesse
 
 - Login: `http://localhost:3000/login`
-- Carteira: `http://localhost:3000/assets`
-- Dashboard: `http://localhost:3000/dashboard`
 - Administração: `http://localhost:3000/admin/login`
 
 ---
@@ -411,6 +421,10 @@ Para compilar o binário (via Docker multi-stage) e iniciar os serviços:
 ```bash
 docker compose up --build -d
 ```
+
+> ⚙️ **Conexão Dinâmica e Migrações:**
+> O `compose.yml` lê as variáveis de ambiente (`DB_USER`, `DB_PASSWORD`, `DB_NAME`) diretamente do seu arquivo `.env` para provisionar o banco de dados com as credenciais definidas.
+> Além disso, as migrações do banco (criação de tabelas, restrições, etc.) são aplicadas **automaticamente** na inicialização do container da aplicação. Não é necessária nenhuma ação manual para preparar o banco de dados.
 
 > **Acesso rápido:** 
 > - **Aplicação:** [http://localhost:3000](http://localhost:3000)
