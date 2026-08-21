@@ -1,0 +1,11 @@
+---
+source: src/handlers/assets.rs
+expression: assets
+---
+[
+  {
+    "id": 1,
+    "name": "Bitcoin",
+    "unit_value": 10.0
+  }
+]
