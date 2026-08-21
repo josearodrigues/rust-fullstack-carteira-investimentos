@@ -4,11 +4,7 @@ use crate::{
     error::AppError,
     models::{
         owned_asset::OwnedAsset,
-        portfolio_summary::{
-            PortfolioSummary,
-            PortfolioDistribution,
-            PortfolioHistoryPoint,
-        },
+        portfolio_summary::{PortfolioDistribution, PortfolioHistoryPoint, PortfolioSummary},
     },
     repositories::owned_assets::OwnedAssetRepository,
 };
@@ -87,11 +83,9 @@ pub async fn assets(
             date: transaction
                 .occurred_at
                 .to_offset(time::UtcOffset::from_hms(-3, 0, 0).unwrap())
-                .format(
-                    time::macros::format_description!(
-                        "[day]/[month]/[year] [hour]:[minute]"
-                    )
-                )
+                .format(time::macros::format_description!(
+                    "[day]/[month]/[year] [hour]:[minute]"
+                ))
                 .unwrap_or_default(),
 
             value: accumulated,
@@ -100,13 +94,11 @@ pub async fn assets(
 
     // Converte os dados para o gráfico de distribuição em JSON
     let distribution_json =
-        serde_json::to_string(&distribution)
-        .expect("failed to serialize portfolio distribution");
+        serde_json::to_string(&distribution).expect("failed to serialize portfolio distribution");
 
     // Converte os dados para o gráfico de histórico em JSON
     let history_json =
-        serde_json::to_string(&history)
-        .expect("failed to serialize portfolio history");
+        serde_json::to_string(&history).expect("failed to serialize portfolio history");
 
     let html = DashboardPage {
         owned_assets,
@@ -127,10 +119,8 @@ pub async fn assets(
 mod tests {
     use super::*;
     use crate::{
-        app::AppState,
-        auth::user::UnauthenticatedUser,
-        repositories::users::UserRepository,
-        models::transaction_history::AssetOperation,
+        app::AppState, auth::user::UnauthenticatedUser,
+        models::transaction_history::AssetOperation, repositories::users::UserRepository,
     };
     use sqlx::PgPool;
 
@@ -143,13 +133,10 @@ mod tests {
 
     #[sqlx::test]
     async fn test_dashboard_renders_summary_and_assets(db: PgPool) {
-        let user = UnauthenticatedUser::new(
-            "satoshi".to_string(),
-            "password".to_string(),
-        )
-        .register(UserRepository::from(db.clone()))
-        .await
-        .unwrap();
+        let user = UnauthenticatedUser::new("satoshi".to_string(), "password".to_string())
+            .register(UserRepository::from(db.clone()))
+            .await
+            .unwrap();
 
         sqlx::query(
             "INSERT INTO assets (id, name, unit_value)
@@ -162,23 +149,13 @@ mod tests {
         let repository = OwnedAssetRepository::from(db.clone());
 
         repository
-            .insert_owned_asset(
-                user.id(),
-                1,
-                2.0,
-                5.0,
-                AssetOperation::Buy,
-            )
+            .insert_owned_asset(user.id(), 1, 2.0, 5.0, AssetOperation::Buy)
             .await
             .unwrap();
 
-        let result = assets(
-            State(test_state(db.clone())),
-            repository,
-            user,
-        )
-        .await
-        .unwrap();
+        let result = assets(State(test_state(db.clone())), repository, user)
+            .await
+            .unwrap();
 
         let html = result.0;
 
@@ -193,13 +170,10 @@ mod tests {
 
     #[sqlx::test]
     async fn test_dashboard_distribution_contains_asset_data(db: PgPool) {
-        let user = UnauthenticatedUser::new(
-            "satoshi".to_string(),
-            "password".to_string(),
-        )
-        .register(UserRepository::from(db.clone()))
-        .await
-        .unwrap();
+        let user = UnauthenticatedUser::new("satoshi".to_string(), "password".to_string())
+            .register(UserRepository::from(db.clone()))
+            .await
+            .unwrap();
 
         sqlx::query(
             "INSERT INTO assets (id, name, unit_value)
@@ -223,13 +197,9 @@ mod tests {
             .await
             .unwrap();
 
-        let result = assets(
-            State(test_state(db.clone())),
-            repository,
-            user,
-        )
-        .await
-        .unwrap();
+        let result = assets(State(test_state(db.clone())), repository, user)
+            .await
+            .unwrap();
 
         let html = result.0;
 
@@ -243,13 +213,10 @@ mod tests {
 
     #[sqlx::test]
     async fn test_dashboard_history_contains_operations(db: PgPool) {
-        let user = UnauthenticatedUser::new(
-            "satoshi".to_string(),
-            "password".to_string(),
-        )
-        .register(UserRepository::from(db.clone()))
-        .await
-        .unwrap();
+        let user = UnauthenticatedUser::new("satoshi".to_string(), "password".to_string())
+            .register(UserRepository::from(db.clone()))
+            .await
+            .unwrap();
 
         sqlx::query(
             "INSERT INTO assets (id, name, unit_value)
@@ -262,34 +229,18 @@ mod tests {
         let repository = OwnedAssetRepository::from(db.clone());
 
         repository
-            .insert_owned_asset(
-                user.id(),
-                1,
-                2.0,
-                80.0,
-                AssetOperation::Buy,
-            )
+            .insert_owned_asset(user.id(), 1, 2.0, 80.0, AssetOperation::Buy)
             .await
             .unwrap();
 
         repository
-            .insert_owned_asset(
-                user.id(),
-                1,
-                1.0,
-                90.0,
-                AssetOperation::Sell,
-            )
+            .insert_owned_asset(user.id(), 1, 1.0, 90.0, AssetOperation::Sell)
             .await
             .unwrap();
 
-        let result = assets(
-            State(test_state(db.clone())),
-            repository,
-            user,
-        )
-        .await
-        .unwrap();
+        let result = assets(State(test_state(db.clone())), repository, user)
+            .await
+            .unwrap();
 
         let html = result.0;
 

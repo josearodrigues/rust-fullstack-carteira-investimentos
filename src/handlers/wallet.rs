@@ -82,9 +82,7 @@ pub async fn purchase_asset(
 pub mod filters {
     use askama;
     use time::{
-        OffsetDateTime,
-        UtcOffset,
-        format_description::StaticFormatDescription,
+        OffsetDateTime, UtcOffset, format_description::StaticFormatDescription,
         macros::format_description,
     };
 
@@ -96,8 +94,7 @@ pub mod filters {
         const HUMAN_READABLE_FORMAT: StaticFormatDescription =
             format_description!(version = 2, "[day]/[month]/[year] [hour]:[minute]");
 
-        let brazil_offset = UtcOffset::from_hms(-3, 0, 0)
-            .map_err(askama::Error::custom)?;
+        let brazil_offset = UtcOffset::from_hms(-3, 0, 0).map_err(askama::Error::custom)?;
 
         datetime
             .to_offset(brazil_offset)

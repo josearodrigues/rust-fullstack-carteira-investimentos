@@ -19,9 +19,7 @@ impl AppState {
         let db = PgPool::connect(&database_url).await?;
 
         // Executa as migrações automaticamente
-        sqlx::migrate!("./migrations")
-            .run(&db)
-            .await?;
+        sqlx::migrate!("./migrations").run(&db).await?;
 
         Ok(Self { db, admin_token })
     }

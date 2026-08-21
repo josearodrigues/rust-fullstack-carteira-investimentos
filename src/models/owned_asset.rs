@@ -1,7 +1,4 @@
-use crate::models::{
-    transaction_history::TransactionHistory,
-    portfolio_summary::format_brl
-};
+use crate::models::{portfolio_summary::format_brl, transaction_history::TransactionHistory};
 use serde::Serialize;
 use sqlx::types::Json;
 
@@ -17,6 +14,6 @@ pub struct OwnedAsset {
 
 impl OwnedAsset {
     pub fn invest_value(&self) -> String {
-        format_brl(self.unit_value * self.quantity_owned)        
+        format_brl(self.unit_value * self.quantity_owned)
     }
 }
