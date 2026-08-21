@@ -53,6 +53,7 @@ RUN rm -rf src
 # proc-macro que lê e valida os templates durante a compilação do Rust.
 COPY .sqlx ./.sqlx
 COPY templates ./templates
+COPY migrations ./migrations
 COPY src ./src
 # Toca os arquivos para invalidar o cache do cargo corretamente.
 RUN touch src/main.rs
@@ -75,7 +76,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copia o binário compilado do stage builder.
-COPY --from=builder /app/target/release/wallet_live ./wallet_live
+COPY --from=builder /app/target/release/wallet ./wallet
 
 # Copia assets necessários em tempo de execução:
 # - templates/: renderização de views (Askama lê do filesystem em dev mode)
@@ -88,4 +89,4 @@ EXPOSE 3000
 
 # Executa o binário diretamente (sem shell) para que SIGTERM seja recebido
 # corretamente pelo processo Rust (graceful shutdown).
-CMD ["./wallet_live"]
+CMD ["./wallet"]
